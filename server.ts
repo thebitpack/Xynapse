@@ -213,6 +213,101 @@ app.post("/api/analyze", async (req, res): Promise<any> => {
   }
 });
 
+app.post("/api/chat", async (req, res): Promise<any> => {
+  const { message, history = [], scan } = req.body;
+
+  if (!message) {
+    return res.status(400).json({ error: "Missing message parameter" });
+  }
+
+  const hasRealKey = process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY";
+
+  if (!hasRealKey) {
+    // Return a smart mock response based on the scan content and user message
+    let reply = "I am the Xynapse AI assistant. I can help analyze this radiograph, but my live connection is disabled because no Gemini API key is configured. Please add a GEMINI_API_KEY in the environment files to enable live conversation.";
+    
+    const msgLower = message.toLowerCase();
+    if (scan) {
+      const findingsStr = scan.findings.map((f: any) => f.name).join(", ");
+      if (msgLower.includes("finding") || msgLower.includes("what did you find") || msgLower.includes("lesion") || msgLower.includes("abnormality") || msgLower.includes("detect")) {
+        if (scan.findings.length > 0) {
+          reply = `Based on the radiograph analysis for ${scan.patientName}, the primary finding is ${findingsStr}. ${scan.findings[0].description} This is classified as ${scan.findings[0].severity} severity.`;
+        } else {
+          reply = `The radiograph analysis for ${scan.patientName} shows normal, clear lung fields with no detected anomalies or lesions.`;
+        }
+      } else if (msgLower.includes("recommend") || msgLower.includes("next step") || msgLower.includes("do next") || msgLower.includes("clinical directive") || msgLower.includes("suggest")) {
+        reply = `For ${scan.patientName}, the recommended next steps are:\n` + scan.recommendations.map((r: string) => `- ${r}`).join("\n");
+      } else if (msgLower.includes("summary") || msgLower.includes("explain") || msgLower.includes("detail")) {
+        reply = `Here is the clinical summary for ${scan.patientName}: "${scan.summary}"`;
+      } else if (msgLower.includes("hello") || msgLower.includes("hi") || msgLower.includes("hey")) {
+        reply = `Hello! I am your clinical assistant for ${scan.patientName}'s radiograph. How can I help you interpret the findings today?`;
+      } else {
+        reply = `Regarding the radiograph of ${scan.patientName} showing ${findingsStr || "no anomalies"}: the summary notes: "${scan.summary}". Please let me know if you have specific questions about these findings or the recommended clinical directives.`;
+      }
+    }
+    return res.json({ reply });
+  }
+
+  try {
+    const ai = getGenAI();
+    
+    // Construct system prompt with scan context
+    let scanContext = "";
+    if (scan) {
+      scanContext = `
+        Active Scan Details:
+        - Patient Name: ${scan.patientName}
+        - File Name: ${scan.fileName}
+        - Findings: ${JSON.stringify(scan.findings)}
+        - Radiologist Summary: ${scan.summary}
+        - Suggested Clinical Directives: ${scan.recommendations.join("; ")}
+      `;
+    }
+
+    const systemPrompt = `
+      You are an expert clinical radiology assistant for Xynapse.
+      You help medical specialists interpret chest radiographs and answer questions about patients' scan reports.
+      Be professional, concise, and clinically precise. Use formatting (bullet points, bold text) where appropriate.
+      
+      Always base your answers on the provided Active Scan Details context if relevant.
+      If the user asks questions unrelated to medical imaging or this scan, politely redirect them back to clinical analysis.
+      
+      Here is the patient's radiograph analysis context:
+      ${scanContext}
+    `;
+
+    // Map history to Google Gen AI contents structure
+    const contents: any[] = [];
+    
+    // Add history
+    for (const msg of history) {
+      contents.push({
+        role: msg.role === "user" ? "user" : "model",
+        parts: [{ text: msg.text }]
+      });
+    }
+
+    // Add current message
+    contents.push({
+      role: "user",
+      parts: [{ text: `${systemPrompt}\n\nUser Question: ${message}` }]
+    });
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: contents,
+    });
+
+    return res.json({ reply: response.text || "I was unable to formulate a response." });
+  } catch (error: any) {
+    console.error("Gemini chat error:", error);
+    return res.status(500).json({
+      error: "Error generating chat response.",
+      details: error.message || String(error)
+    });
+  }
+});
+
 // Configure Vite and static assets middleware
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Poppins:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -35,11 +35,11 @@
   --color-on-secondary-fixed: #001f24;
   --color-on-secondary-fixed-variant: #004f58;
 
-  --font-display-italic: "Instrument Serif", serif;
-  --font-headline-lg: "Inter", sans-serif;
-  --font-headline-md: "Inter", sans-serif;
-  --font-body-main: "Inter", sans-serif;
-  --font-label-caps: "Inter", sans-serif;
+  --font-display-italic: "Poppins", sans-serif;
+  --font-headline-lg: "Poppins", sans-serif;
+  --font-headline-md: "Poppins", sans-serif;
+  --font-body-main: "ITC Avant Garde Gothic", "Avant Garde Gothic", "Avant Garde", "Century Gothic", "TeXGyreAdventor", sans-serif;
+  --font-label-caps: "ITC Avant Garde Gothic", "Avant Garde Gothic", "Avant Garde", "Century Gothic", "TeXGyreAdventor", sans-serif;
   --font-data-mono: "JetBrains Mono", monospace;
   
   --spacing-xs: 0.25rem;
@@ -86,3 +86,72 @@
   opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
+
+/* Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
+/* Body defaults */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-headline-lg), "Poppins", sans-serif;
+}
+
+/* Consistent focus styles */
+*:focus-visible {
+  outline: 2px solid rgba(0, 227, 253, 0.4);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Consistent code block styling */
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+code {
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Scrollbar hiding and styling helpers */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 2px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
