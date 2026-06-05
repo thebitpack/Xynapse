@@ -7,8 +7,7 @@ import {
   RefreshCw, 
   ZoomIn, 
   ZoomOut, 
-  Contrast, 
-  Info, 
+  Contrast,
   Code, 
   BookOpen, 
   User, 
@@ -27,11 +26,12 @@ import {
 import { PRESET_SCANS, TEAM_MEMBERS, LUNG_SVG_STENCIL, LUNG_SVG_STENCIL_CARDIOMEGALY, LUNG_SVG_STENCIL_NORMAL } from "./data/presets";
 import { ActiveSection, Scan, Finding } from "./types";
 import { motion, AnimatePresence } from "motion/react";
+import logo from "./assets/logo/logo.png";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home");
   const [scans, setScans] = useState<Scan[]>(PRESET_SCANS);
-  const [selectedScanId, setSelectedScanId] = useState<string>("scan_1");
+  const [selectedScanId, setSelectedScanId] = useState<string>("new");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState<boolean>(false);
@@ -44,7 +44,6 @@ export default function App() {
   const [selectedFinding, setSelectedFinding] = useState<Finding | null>(null);
 
   // Chatbot UI state
-  const [activeTab, setActiveTab] = useState<"report" | "chat">("report");
   const [chatInput, setChatInput] = useState<string>("");
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
   const [chatHistory, setChatHistory] = useState<Record<string, { role: "user" | "model"; text: string }[]>>({});
@@ -55,10 +54,8 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (activeTab === "chat") {
-      scrollToBottom();
-    }
-  }, [chatHistory, activeTab, selectedScanId]);
+    scrollToBottom();
+  }, [chatHistory, selectedScanId]);
 
   const handleSendChatMessage = async (e?: React.FormEvent, presetMessage?: string) => {
     if (e) e.preventDefault();
@@ -289,10 +286,10 @@ export default function App() {
             className="flex items-center gap-2.5 cursor-pointer select-none font-headline-md text-headline-md font-bold text-primary tracking-tight shrink-0"
           >
             <img 
-              alt="Xynapse Logo" 
-              className="w-[60px] h-[60px] object-contain" 
-              src="/assets/logo/logo.png"
-            />
+  alt="Xynapse Logo" 
+  className="w-[60px] h-[60px] object-contain" 
+  src={logo}
+/>
             <span className="tracking-wide">Xynapse</span>
           </div>
 
@@ -419,130 +416,78 @@ export default function App() {
 
           {/* ================= ANALYSIS SECTION ================= */}
           {activeSection === "analysis" && (
-            <motion.section 
+            <motion.section
               key="analysis"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.3 }}
-              className="flex-1 py-4 flex flex-col min-h-[calc(100vh-120px)]"
+              className="flex-1 py-4 flex flex-col overflow-hidden"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] lg:h-[780px] gap-5 flex-1">
-                
-                {/* Left Panel: Scopes configuration & History */}
-                <div className="bg-surface-container-lowest/80 rounded-lg glass-border flex flex-col gap-4 p-5 lg:h-full lg:max-h-[780px] overflow-y-auto">
-                  
-                  {/* Inline Sandbox Mode Alert */}
-                  {!hasApiKey && (
-                    <div className="p-3.5 bg-surface-container-high border border-outline-variant/30 text-on-surface rounded-md flex items-start gap-3 backdrop-blur-md animate-fade-in-up">
-                      <Info className="w-5 h-5 text-secondary-container shrink-0 mt-0.5" />
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-bold text-primary tracking-wide uppercase">Sandbox Active</span>
-                        <p className="text-[10px] text-on-surface-variant mt-0.5 leading-relaxed">
-                          No <code className="font-mono bg-surface-container-lowest py-0.5 px-1 rounded text-secondary-container">GEMINI_API_KEY</code> found. Using high-fidelity presets for mock diagnosis. Add your key in the secrets panel to deploy live analysis.
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Upload Configuration / Patient Ingestion Header */}
-                  <div className="flex flex-col gap-3">
-                    <h3 className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-[0.12em] uppercase">Ingest Radiograph</h3>
-                    
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] text-on-surface-variant font-semibold">Patient Demographics</label>
-                      <input 
-                        type="text" 
-                        value={newPatientName}
-                        onChange={(e) => setNewPatientName(e.target.value)}
-                        placeholder="Patient Full Name / ID"
-                        className="w-full bg-surface-container px-3 py-2.5 text-[13px] border border-white/5 rounded-md text-primary focus:outline-none focus:border-secondary-container/60 placeholder:text-on-surface-variant/40 transition-colors"
-                      />
-                    </div>
+              {/* Section header */}
+              <div className="flex items-center justify-between mb-5 shrink-0">
+                <div>
+                  <h2 className="text-primary font-bold text-[22px] tracking-tight leading-none">Radiology Workspace</h2>
+                  <p className="text-on-surface-variant text-[12px] mt-1">AI-powered diagnostic analysis{selectedScanId !== "new" ? ` · ${activeScan.patientName}` : " · Upload a radiograph to begin"}</p>
+                </div>
+                {!hasApiKey && (
+                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-surface-container-high border border-outline-variant/30 rounded-md">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+                    <span className="text-[10px] font-mono text-on-surface-variant">Sandbox Mode — No API Key</span>
                   </div>
+                )}
+              </div>
 
-                  {/* Upload Drag and Drop Target Area */}
-                  <div 
-                    onDragEnter={handleDrag}
-                    onDragOver={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDrop={handleDrop}
-                    onClick={triggerFileInput}
-                    className={`border border-dashed rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 min-h-[120px] ${
-                      dragActive 
-                        ? "border-secondary-container bg-secondary-container/10 scale-[0.99]" 
-                        : "border-outline-variant hover:border-on-surface-variant/40 hover:bg-surface-container-low"
-                    }`}
-                  >
-                    <input 
-                      type="file" 
-                      ref={fileInputRef}
-                      onChange={handleFileInputChange}
-                      className="hidden" 
-                      accept="image/*"
-                    />
-                    
-                    {isAnalyzing ? (
-                      <div className="flex flex-col items-center py-4">
-                        <RefreshCw className="w-7 h-7 text-secondary-container animate-spin mb-3" />
-                        <span className="font-medium text-primary text-[13px]">Consulting Gemini AI...</span>
-                        <span className="font-data-mono text-[10px] text-on-surface-variant/60 mt-1">Staging model pipeline</span>
-                      </div>
-                    ) : (
-                      <>
-                        <Upload className="w-7 h-7 text-on-surface-variant mb-2 group-hover:text-primary transition-colors duration-200" />
-                        <span className="font-medium text-primary text-[13px]">Drop Image or Browse</span>
-                        <span className="font-data-mono text-data-mono text-on-surface-variant/60 text-[10px] mt-1.5">PNG, JPG, DCM up to 20MB</span>
-                      </>
-                    )}
-                  </div>
+              {/* 3-column grid layout */}
+              <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_340px] gap-4" style={{ height: "calc(100vh - 220px)", minHeight: "640px", overflow: "hidden" }}>
 
-                  {/* Feedback on uploaded error */}
-                  {uploadError && (
-                    <div className="p-3 bg-error-container/15 border border-error/20 text-error rounded-sm text-[12px] flex items-start gap-2 animate-fade-in-up">
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>{uploadError}</span>
-                    </div>
-                  )}
-
-                  {/* Scan History list */}
-                  <div className="flex flex-col gap-2 mt-3 flex-1">
+                {/* ── COL 1: Upload + Scan History ── */}
+                <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col gap-4 p-4 h-full overflow-hidden">
+                  {/* Scan list */}
+                  <div className="flex flex-col gap-2 flex-1 min-h-0">
                     <div className="flex justify-between items-center">
-                      <h3 className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-[0.12em] uppercase">Active Radiographs</h3>
-                      <span className="text-[10px] text-on-surface-variant font-mono bg-surface-container-high px-2 py-0.5 rounded-md">{scans.length} loaded</span>
+                      <span className="text-[9px] font-bold text-on-surface-variant tracking-[0.14em] uppercase">Radiograph Queue</span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[9px] font-mono text-on-surface-variant/60 bg-surface-container px-1.5 py-0.5 rounded">{scans.length}</span>
+                        <button
+                          onClick={() => setSelectedScanId("new")}
+                          title="New Upload"
+                          className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 ${
+                            selectedScanId === "new"
+                              ? "bg-secondary-container text-on-secondary-container"
+                              : "bg-surface-container border border-white/10 text-on-surface-variant hover:text-primary hover:border-secondary-container/40"
+                          }`}
+                        >
+                          <Upload className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
                     </div>
-                    
-                    <div className="flex flex-col gap-2 overflow-y-auto max-h-[300px] lg:max-h-none pr-0.5">
+                    <div className="flex flex-col gap-1.5 overflow-y-auto pr-0.5 flex-1 min-h-0">
                       {scans.map((scan) => {
                         const isSelected = scan.id === selectedScanId;
                         const hasFindings = scan.findings.length > 0;
                         return (
-                          <div 
+                          <div
                             key={scan.id}
                             onClick={() => setSelectedScanId(scan.id)}
-                            className={`p-3 rounded-md border transition-all duration-200 cursor-pointer flex flex-col gap-2 ${
-                              isSelected 
-                                ? "bg-surface-container-high border-secondary-container/40" 
-                                : "bg-surface-container-low/50 border-white/5 hover:bg-surface-container hover:border-white/10"
+                            className={`p-2.5 rounded-lg border transition-all duration-200 cursor-pointer ${
+                              isSelected
+                                ? "bg-surface-container-high border-secondary-container/35 shadow-[0_0_12px_rgba(0,227,253,0.06)]"
+                                : "bg-surface-container-low/40 border-white/4 hover:bg-surface-container hover:border-white/10"
                             }`}
                           >
-                            <div className="flex justify-between items-center">
-                              <span className="text-primary text-[13px] font-semibold leading-tight truncate max-w-[170px]">
-                                {scan.patientName}
-                              </span>
-                              
-                              {/* Diagnostic tag chip */}
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <span className={`w-1.5 h-1.5 rounded-full ${hasFindings ? "bg-secondary-container animate-pulse" : "bg-green-400"}`} />
-                                <span className={`font-data-mono text-[10px] uppercase font-bold tracking-tight ${hasFindings ? "text-secondary-container" : "text-green-400"}`}>
-                                  {hasFindings ? scan.findings[0].name.split(" ")[0] : "Normal"}
+                            <div className="flex justify-between items-center mb-1">
+                              <span className="text-primary text-[12px] font-semibold truncate max-w-[150px]">{scan.patientName}</span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <span className={`w-1.5 h-1.5 rounded-full ${hasFindings ? "bg-secondary-container animate-pulse" : "bg-emerald-400"}`} />
+                                <span className={`font-data-mono text-[9px] uppercase font-bold ${hasFindings ? "text-secondary-container" : "text-emerald-400"}`}>
+                                  {hasFindings ? scan.findings[0].name.split(" ")[0] : "Clear"}
                                 </span>
                               </div>
                             </div>
-
-                            <div className="flex justify-between items-center text-[10px] text-on-surface-variant font-mono">
-                              <span className="truncate max-w-[150px]">{scan.fileName}</span>
-                              <span className="shrink-0 ml-2">{scan.date}</span>
+                            <div className="flex justify-between text-[9px] text-on-surface-variant/55 font-mono">
+                              <span className="truncate max-w-[130px]">{scan.fileName}</span>
+                              <span>{scan.date}</span>
                             </div>
                           </div>
                         );
@@ -551,406 +496,429 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Right Panel: High-fidelity image workspace viewer */}
-                <div className="bg-surface rounded-lg glass-border flex flex-col overflow-hidden shadow-2xl relative min-h-[580px] md:h-[780px] lg:h-full lg:max-h-[780px]">
-                  
-                  {/* Top toolbar */}
-                  <div className="h-[44px] border-b border-white/5 flex items-center px-4 justify-between bg-surface-container-lowest select-none shrink-0">
-                    <div className="flex gap-1 items-center">
-                      <button 
-                        onClick={handleZoomIn}
-                        title="Zoom In" 
-                        className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all"
-                      >
-                        <ZoomIn className="w-3.5 h-3.5" />
-                      </button>
-                      <button 
-                        onClick={handleZoomOut}
-                        title="Zoom Out" 
-                        className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all"
-                      >
-                        <ZoomOut className="w-3.5 h-3.5" />
-                      </button>
-                      
-                      <div className="h-3.5 w-[1px] bg-white/8 mx-1.5" />
+                {/* ── COL 2: HERO — AI Chatbot ── */}
+                <div className="relative rounded-xl overflow-hidden flex flex-col border border-white/5 shadow-[0_0_60px_rgba(0,227,253,0.04)] h-full" style={{ background: "linear-gradient(160deg, #0d0d16 0%, #13131b 60%, #0d1018 100%)" }}>
 
-                      <button 
+                  {/* Ambient glow top-center */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[340px] h-[1px] bg-gradient-to-r from-transparent via-secondary-container/40 to-transparent" />
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[60px] bg-secondary-container/5 blur-3xl rounded-full pointer-events-none" />
+
+                  {/* Chat hero header */}
+                  <div className="relative shrink-0 px-5 py-4 border-b border-white/5 flex items-center justify-between" style={{ background: "rgba(13,13,22,0.8)" }}>
+                    <div className="flex items-center gap-3">
+                      {/* AI avatar */}
+                      <div className="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(0,227,253,0.15), rgba(0,227,253,0.04))", border: "1px solid rgba(0,227,253,0.25)" }}>
+                        <Sparkles className="w-4 h-4 text-secondary-container" />
+                        <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-surface-container-lowest" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-primary font-bold text-[14px] tracking-tight">Xynapse Co-Pilot</span>
+                          <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-secondary-container/10 text-secondary-container border border-secondary-container/20 uppercase tracking-widest">Gemini</span>
+                        </div>
+                        <p className="text-[10px] text-on-surface-variant/70 mt-0.5">
+                          Context: <span className="text-secondary-container/90">{selectedScanId === "new" ? "New Upload" : activeScan.patientName}</span> {selectedScanId !== "new" && `· ${activeScan.findings.length > 0 ? `${activeScan.findings.length} finding${activeScan.findings.length > 1 ? "s" : ""}` : "No anomalies"}`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {(chatHistory[selectedScanId] || []).length > 0 && (
+                        <button
+                          onClick={handleClearChatHistory}
+                          className="flex items-center gap-1.5 text-[10px] font-mono text-on-surface-variant/50 hover:text-red-400 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Messages area */}
+                  <div className={`flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-thin select-text min-w-0 ${selectedScanId === "new" ? "flex flex-col justify-center items-center" : "flex flex-col"}`}>
+                    {selectedScanId === "new" ? (
+                      <div style={{ width: "100%", maxWidth: "420px" }} className="flex flex-col gap-6">
+                        <div className="text-center mb-2">
+                          <h3 className="text-primary font-bold text-[20px] tracking-tight mb-2">Initialize Analysis</h3>
+                          <p className="text-on-surface-variant/70 text-[13px] leading-relaxed">
+                            Provide the patient's radiograph and ID to generate a comprehensive AI-driven clinical report.
+                          </p>
+                        </div>
+                        
+                        {/* Patient input */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-[10px] font-bold text-on-surface-variant tracking-[0.14em] uppercase text-left">Patient Demographics</label>
+                          <input
+                            type="text"
+                            value={newPatientName}
+                            onChange={(e) => setNewPatientName(e.target.value)}
+                            placeholder="Full Name or Patient ID"
+                            className="w-full bg-surface-container px-4 py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors"
+                          />
+                        </div>
+
+                        {/* Drop zone */}
+                        <div
+                          onDragEnter={handleDrag}
+                          onDragOver={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDrop={handleDrop}
+                          onClick={triggerFileInput}
+                          className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
+                            dragActive
+                              ? "border-secondary-container bg-secondary-container/10 scale-[0.98]"
+                              : "border-outline-variant/40 hover:border-secondary-container/50 hover:bg-surface-container-low/80"
+                          }`}
+                        >
+                          <input type="file" ref={fileInputRef} onChange={handleFileInputChange} className="hidden" accept="image/*" />
+                          {isAnalyzing ? (
+                            <div className="flex flex-col items-center py-4">
+                              <RefreshCw className="w-8 h-8 text-secondary-container animate-spin mb-4" />
+                              <span className="font-medium text-primary text-[14px]">Consulting Gemini...</span>
+                              <span className="font-data-mono text-[10px] text-on-surface-variant/50 mt-1.5">Processing multi-modal inputs</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="w-12 h-12 rounded-full bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center mb-4">
+                                <Upload className="w-6 h-6 text-secondary-container" />
+                              </div>
+                              <span className="font-bold text-primary text-[14px] mb-1">Drag radiograph here or browse</span>
+                              <span className="font-data-mono text-[10px] text-on-surface-variant/50">PNG, JPG, DCM up to 20MB</span>
+                            </>
+                          )}
+                        </div>
+
+                        {uploadError && (
+                          <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-[12px] flex items-start gap-2 text-left">
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                            <span>{uploadError}</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (chatHistory[selectedScanId] || []).length === 0 ? (
+                      /* Empty state — hero welcome */
+                      <div className="h-full flex flex-col items-center justify-center text-center px-6 py-10">
+                        {/* Glowing orb icon */}
+                        <div className="relative mb-6">
+                          <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ background: "linear-gradient(135deg, rgba(0,227,253,0.18), rgba(0,227,253,0.05))", border: "1px solid rgba(0,227,253,0.3)", boxShadow: "0 0 40px rgba(0,227,253,0.12)" }}>
+                            <Sparkles className="w-7 h-7 text-secondary-container" />
+                          </div>
+                          <div className="absolute inset-0 rounded-full blur-xl bg-secondary-container/10 pointer-events-none" />
+                        </div>
+
+                        <h3 className="text-primary font-bold text-[18px] tracking-tight mb-2">AI Clinical Assistant</h3>
+                        <p className="text-on-surface-variant/70 text-[13px] leading-relaxed max-w-[360px] mb-8">
+                          Ask anything about <span className="text-primary font-medium">{activeScan.patientName}</span>'s radiograph. I'll explain findings, severity, and clinical guidance in plain language.
+                        </p>
+
+                        {/* Suggested prompt grid */}
+                        <div className="w-full max-w-[480px]">
+                          <span className="text-[9px] font-mono text-on-surface-variant/40 uppercase tracking-[0.16em] mb-3 block">Suggested prompts</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {[
+                              { icon: "🔍", text: "Explain findings in plain terms" },
+                              { icon: "📋", text: "What are the next clinical steps?" },
+                              { icon: "⚠️", text: activeScan.findings.length > 0 ? "How severe are these findings?" : "Confirm lungs are normal" },
+                              { icon: "💊", text: "Suggest treatment considerations" },
+                            ].map((item, idx) => (
+                              <button
+                                key={idx}
+                                onClick={() => handleSendChatMessage(undefined, item.text)}
+                                className="text-left px-3.5 py-3 rounded-lg border border-white/6 hover:border-secondary-container/30 text-on-surface-variant hover:text-primary text-[12px] transition-all duration-200 cursor-pointer group"
+                                style={{ background: "rgba(255,255,255,0.02)" }}
+                              >
+                                <span className="mr-2">{item.icon}</span>
+                                <span className="group-hover:underline decoration-secondary-container/40 underline-offset-2">{item.text}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {(chatHistory[selectedScanId] || []).map((msg, index) => {
+                          const isUser = msg.role === "user";
+                          return (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.25 }}
+                              className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+                            >
+                              {!isUser && (
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mr-2.5 mt-0.5" style={{ background: "linear-gradient(135deg, rgba(0,227,253,0.15), rgba(0,227,253,0.04))", border: "1px solid rgba(0,227,253,0.2)" }}>
+                                  <Sparkles className="w-3 h-3 text-secondary-container" />
+                                </div>
+                              )}
+                              <div className={`max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
+                                <div className={`px-4 py-3 rounded-2xl text-[13px] leading-relaxed ${
+                                  isUser
+                                    ? "rounded-tr-sm text-on-secondary-container font-medium"
+                                    : "rounded-tl-sm border border-white/5 text-on-surface"
+                                }`}
+                                  style={isUser
+                                    ? { background: "linear-gradient(135deg, #00c8e0, #00e3fd)", color: "#001f24" }
+                                    : { background: "rgba(255,255,255,0.04)" }
+                                  }
+                                >
+                                  {msg.text.split("\n").map((line, lIdx) => (
+                                    <p key={lIdx} className={lIdx > 0 ? "mt-1.5" : ""}>{line}</p>
+                                  ))}
+                                </div>
+                                <span className="text-[9px] font-mono text-on-surface-variant/35 mt-1.5 uppercase tracking-wider px-1">
+                                  {isUser ? "You" : "Co-Pilot"}
+                                </span>
+                              </div>
+                              {isUser && (
+                                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 ml-2.5 mt-0.5 bg-surface-container-high border border-white/8">
+                                  <User className="w-3 h-3 text-on-surface-variant" />
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
+
+                        {isChatLoading && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex justify-start"
+                          >
+                            <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mr-2.5 mt-0.5" style={{ background: "linear-gradient(135deg, rgba(0,227,253,0.15), rgba(0,227,253,0.04))", border: "1px solid rgba(0,227,253,0.2)" }}>
+                              <Sparkles className="w-3 h-3 text-secondary-container" />
+                            </div>
+                            <div className="px-4 py-3 rounded-2xl rounded-tl-sm border border-white/5 flex items-center gap-1.5" style={{ background: "rgba(255,255,255,0.04)" }}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-bounce" style={{ animationDelay: "0ms" }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-bounce" style={{ animationDelay: "160ms" }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-bounce" style={{ animationDelay: "320ms" }} />
+                            </div>
+                          </motion.div>
+                        )}
+                        <div ref={chatEndRef} />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Quick-reply chips (when messages exist) */}
+                  {(chatHistory[selectedScanId] || []).length > 0 && (
+                    <div className="px-5 pb-2 flex gap-2 overflow-x-auto scrollbar-none shrink-0">
+                      {["Explain findings", "Next steps", "Severity level", "Treatment options"].map((chip, idx) => (
+                        <button
+                          key={idx}
+                          disabled={isChatLoading}
+                          onClick={() => handleSendChatMessage(undefined, chip)}
+                          className="shrink-0 px-3 py-1.5 rounded-full text-[10px] font-mono border border-white/8 text-on-surface-variant hover:text-primary hover:border-secondary-container/30 transition-all duration-200 disabled:opacity-40 cursor-pointer whitespace-nowrap"
+                          style={{ background: "rgba(255,255,255,0.03)" }}
+                        >
+                          {chip}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Input bar */}
+                  {selectedScanId !== "new" && (
+                    <div className="px-4 pb-4 pt-2 shrink-0 border-t border-white/5">
+                      <form onSubmit={handleSendChatMessage} className="relative flex items-center">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        disabled={isChatLoading}
+                        placeholder={`Ask about ${activeScan.patientName.split(" ")[0]}'s scan...`}
+                        className="w-full py-3 pl-4 pr-12 text-[13px] rounded-xl border border-white/8 focus:border-secondary-container/50 focus:outline-none text-primary placeholder:text-on-surface-variant/35 transition-all disabled:opacity-50"
+                        style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(8px)" }}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isChatLoading || !chatInput.trim()}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-30 cursor-pointer"
+                        style={{ background: chatInput.trim() ? "linear-gradient(135deg, #00c8e0, #00e3fd)" : "rgba(255,255,255,0.06)" }}
+                      >
+                        <Send className={`w-3.5 h-3.5 ${chatInput.trim() ? "text-[#001f24]" : "text-on-surface-variant"}`} />
+                      </button>
+                    </form>
+                    <p className="text-center text-[9px] font-mono text-on-surface-variant/25 mt-2">
+                      AI-generated clinical guidance · Not a substitute for professional diagnosis
+                    </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── COL 3: Image Viewer + Findings ── */}
+                <div className="flex flex-col gap-3 h-full overflow-hidden">
+                  {selectedScanId === "new" ? (
+                    <div className="h-full border border-dashed border-white/10 rounded-xl bg-surface-container-lowest/30 flex flex-col items-center justify-center text-center p-6 text-on-surface-variant/40">
+                      <ImageIcon className="w-10 h-10 mb-4 opacity-20" />
+                      <span className="text-[13px] font-medium text-on-surface-variant/60">Awaiting Radiograph</span>
+                      <p className="text-[10px] mt-2 max-w-[200px] leading-relaxed">
+                        Upload a scan in the central panel to generate clinical findings.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
+                      {/* Image viewer card */}
+                  <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col overflow-hidden" style={{ height: "300px", flexShrink: 0 }}>
+                    {/* Toolbar */}
+                    <div className="h-[38px] border-b border-white/5 flex items-center px-3 gap-1 bg-surface-container-lowest/80 shrink-0">
+                      <button onClick={handleZoomIn} title="Zoom In" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
+                        <ZoomIn className="w-3 h-3" />
+                      </button>
+                      <button onClick={handleZoomOut} title="Zoom Out" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
+                        <ZoomOut className="w-3 h-3" />
+                      </button>
+                      <div className="w-[1px] h-3 bg-white/8 mx-1" />
+                      <button
                         onClick={() => setContrastSetting(c => c === "normal" ? "high" : c === "high" ? "inverted" : "normal")}
-                        title="Cycling Contrast LUT Maps" 
-                        className={`p-1.5 px-2 rounded-md flex items-center gap-1.5 text-[11px] font-mono transition-all ${
-                          contrastSetting !== "normal" 
-                            ? "bg-secondary-container/10 text-secondary-container" 
-                            : "text-on-surface-variant hover:text-primary hover:bg-surface-container"
-                        }`}
+                        className={`p-1.5 rounded-md flex items-center gap-1 text-[10px] font-mono transition-all ${contrastSetting !== "normal" ? "text-secondary-container bg-secondary-container/10" : "text-on-surface-variant hover:text-primary"}`}
                       >
-                        <Contrast className="w-3.5 h-3.5" />
-                        <span className="capitalize hidden lg:inline">{contrastSetting} Map</span>
+                        <Contrast className="w-3 h-3" />
+                        <span className="capitalize">{contrastSetting}</span>
                       </button>
-
-                      <div className="h-3.5 w-[1px] bg-white/8 mx-1.5" />
-
-                      <button 
+                      <div className="w-[1px] h-3 bg-white/8 mx-1" />
+                      <button
                         onClick={() => setShowCoordinates(!showCoordinates)}
-                        title="Toggle Diagnostic Overlays" 
-                        className={`p-1.5 px-2 text-[11px] font-mono rounded-md transition-all ${
-                          showCoordinates 
-                            ? "bg-white/10 text-primary" 
-                            : "text-on-surface-variant hover:text-primary hover:bg-surface-container"
-                        }`}
+                        className={`p-1 text-[9px] font-mono rounded transition-all ${showCoordinates ? "text-primary" : "text-on-surface-variant/50"}`}
                       >
-                        Overlay: {showCoordinates ? "ON" : "OFF"}
+                        OVL:{showCoordinates ? "ON" : "OFF"}
                       </button>
-
-                      <button 
-                        onClick={handleResetFilters}
-                        title="Reset Viewer Scale" 
-                        className="text-[10px] font-mono p-1.5 px-2 text-on-surface-variant/60 hover:text-primary transition-all"
-                      >
+                      <button onClick={handleResetFilters} className="ml-auto text-[9px] font-mono text-on-surface-variant/40 hover:text-primary transition-all p-1">
                         Reset
                       </button>
                     </div>
 
-                    <div className="font-data-mono text-data-mono text-on-surface-variant text-[10px] hidden sm:block truncate max-w-[160px]">
-                      {activeScan.fileName}
-                    </div>
-                  </div>
-
-                  {/* Main Viewer & Findings columns */}
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_380px] lg:grid-cols-[1fr_400px] overflow-hidden relative h-[calc(100%-44px)]">
-                    
-                    {/* Centered Canvas Container */}
-                    <div className="bg-surface-container-lowest/40 flex items-center justify-center p-4 overflow-hidden relative min-h-[400px] md:h-full">
-                      
-                      {/* Active radiograph viewport block */}
-                      <div className="relative w-full max-w-[480px] aspect-square bg-surface-container-high/60 rounded-md xl:rounded-xl glass-border overflow-hidden flex items-center justify-center shadow-lg transition-all">
-                        
-                        <div 
-                          className="w-full h-full flex items-center justify-center p-6 transition-transform duration-200"
+                    {/* Viewer area */}
+                    <div className="relative flex items-center justify-center flex-1 bg-surface-container-lowest/30" style={{ minHeight: 0 }}>
+                      <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
+                        <div
+                          className="w-full h-full flex items-center justify-center p-4 transition-transform duration-200"
                           style={{
                             transform: `scale(${zoom})`,
-                            filter: contrastSetting === "high" 
-                              ? "contrast(1.45) brightness(0.9)" 
-                              : contrastSetting === "inverted" 
-                              ? "invert(1) contrast(1.15) brightness(0.95)" 
+                            filter: contrastSetting === "high"
+                              ? "contrast(1.45) brightness(0.9)"
+                              : contrastSetting === "inverted"
+                              ? "invert(1) contrast(1.15) brightness(0.95)"
                               : "none"
                           }}
                         >
-                          {/* Render custom base64 scan OR vector presets */}
                           {activeScan.imageUrl.startsWith("data:") ? (
-                            <img 
-                              src={activeScan.imageUrl} 
-                              alt="Chest Radiography scan" 
-                              className="max-h-full max-w-full object-contain pointer-events-none select-none rounded"
-                              referrerPolicy="no-referrer"
-                            />
+                            <img src={activeScan.imageUrl} alt="Chest Radiography" className="max-h-full max-w-full object-contain pointer-events-none select-none rounded" referrerPolicy="no-referrer" />
                           ) : (
                             renderLungStencil(activeScan.imageUrl)
                           )}
                         </div>
 
-                        {/* Relative Absolute Bounding box visualization layer */}
                         {showCoordinates && activeScan.findings.map((f, index) => {
-                          const isSelected = selectedFinding?.name === f.name;
+                          const isSel = selectedFinding?.name === f.name;
                           return (
                             <div
                               key={index}
                               onClick={() => setSelectedFinding(f)}
-                              className={`absolute border cursor-pointer hover:border-secondary-container transition-all group duration-300 ${
-                                isSelected 
-                                  ? "border-secondary-container bg-secondary-container/10 ring-2 ring-secondary-container/20" 
-                                  : "border-secondary-container/45 bg-secondary-container/5"
-                              }`}
-                              style={{
-                                top: `${f.location.y}%`,
-                                left: `${f.location.x}%`,
-                                width: `${f.location.width}%`,
-                                height: `${f.location.height}%`
-                              }}
+                              className={`absolute border cursor-pointer transition-all duration-300 ${isSel ? "border-secondary-container bg-secondary-container/10 ring-1 ring-secondary-container/20" : "border-secondary-container/40 bg-secondary-container/4 hover:border-secondary-container"}`}
+                              style={{ top: `${f.location.y}%`, left: `${f.location.x}%`, width: `${f.location.width}%`, height: `${f.location.height}%` }}
                             >
-                              {/* Label node */}
-                              <div className="absolute -top-6 left-0 bg-secondary-container text-on-secondary-container font-data-mono text-[9px] px-1.5 py-0.5 rounded-sm font-bold shadow-md uppercase tracking-wide">
-                                {f.name} {(f.confidence * 100).toFixed(0)}%
+                              <div className="absolute -top-5 left-0 bg-secondary-container text-on-secondary-container font-data-mono text-[8px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wide">
+                                {f.name.split(" ")[0]} {(f.confidence * 100).toFixed(0)}%
                               </div>
                             </div>
                           );
                         })}
                       </div>
 
-                      {/* Display warning badge if scan is custom simulated */}
                       {activeScan.isSimulated && (
-                        <div className="absolute top-4 left-4 bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 text-[10px] font-mono px-2.5 py-1 rounded-sm flex items-center gap-1.5 backdrop-blur-md">
-                          <AlertCircle className="w-3.5 h-3.5" />
-                          <span>Simulated Report (Demo Mode)</span>
+                        <div className="absolute top-3 left-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[9px] font-mono px-2 py-1 rounded flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Demo
                         </div>
                       )}
-                    </div>
 
-                    {/* AI Insights & Medical reports side table */}
-                    <div className="border-t md:border-t-0 md:border-l border-white/5 bg-surface-container-lowest/80 flex flex-col overflow-hidden h-full">
-                      {/* Tabs Header */}
-                      <div className="flex border-b border-white/5 bg-surface-container-lowest shrink-0">
-                        <button
-                          onClick={() => setActiveTab("report")}
-                          className={`flex-1 py-3.5 text-center text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 border-b-2 cursor-pointer ${
-                            activeTab === "report"
-                              ? "text-primary border-primary bg-surface-container-lowest/30"
-                              : "text-on-surface-variant/65 border-transparent hover:text-primary hover:bg-surface-container-low/20"
-                          }`}
-                        >
-                          <FileText className="w-3.5 h-3.5" />
-                          Clinical Report
-                        </button>
-                        <button
-                          onClick={() => setActiveTab("chat")}
-                          className={`flex-1 py-3.5 text-center text-[10px] font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-1.5 border-b-2 cursor-pointer ${
-                            activeTab === "chat"
-                              ? "text-primary border-primary bg-surface-container-lowest/30"
-                              : "text-on-surface-variant/65 border-transparent hover:text-primary hover:bg-surface-container-low/20"
-                          }`}
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                          AI Q&A Chat
-                        </button>
-                      </div>
-
-                      {/* Tab Contents */}
-                      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                        {activeTab === "report" ? (
-                          <div className="flex-1 flex flex-col p-4 overflow-y-auto">
-                            <div className="flex justify-between items-center pb-3 border-b border-white/5 shrink-0">
-                              <span className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-[0.12em] uppercase">AI Analysis</span>
-                              <div className="font-mono text-secondary-container text-[10px] font-bold">
-                                Avg: {activeScan.findings.length > 0 ? (activeScan.findings[0].confidence * 100).toFixed(1) + "%" : "100.0%"}
-                              </div>
-                            </div>
-
-                            {/* text contents & checklists container with scrolling wrapper inside */}
-                            <div className="flex-1 flex flex-col gap-4 py-4 min-h-0">
-                              {activeScan.findings.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center text-center p-6 bg-surface-container-low/30 rounded border border-white/5">
-                                  <span className="text-green-400 font-bold text-[14px]">No Anomalies Found</span>
-                                  <p className="text-[11px] text-on-surface-variant mt-1.5 leading-relaxed">
-                                    Gemini analyzed this lung and determined that both lung lobes, cardioportal silhouette, and spinal vertebrae alignment are entirely clear.
-                                  </p>
-                                </div>
-                              ) : (
-                                <div className="flex flex-col gap-3">
-                                  <label className="text-[10px] text-on-surface-variant font-bold tracking-[0.12em] uppercase">Detected Lesions</label>
-                                  
-                                  {activeScan.findings.map((f, i) => {
-                                    const isSelected = selectedFinding?.name === f.name;
-                                    return (
-                                      <div 
-                                        key={i}
-                                        onClick={() => setSelectedFinding(f)}
-                                        className={`p-3 rounded-md border transition-all cursor-pointer ${
-                                          isSelected 
-                                            ? "bg-surface-container-high border-secondary-container" 
-                                            : "bg-surface-container-low border-white/5 hover:border-white/15"
-                                        }`}
-                                      >
-                                        <div className="flex justify-between items-start mb-1.5">
-                                          <span className="font-semibold text-primary text-[13px]">{f.name}</span>
-                                          <span className="font-data-mono text-[11px] text-secondary-container font-bold">{(f.confidence * 100).toFixed(1)}%</span>
-                                        </div>
-                                        <p className="text-[11px] text-on-surface-variant leading-relaxed mb-2.5">
-                                          {f.description}
-                                        </p>
-
-                                        <div className="flex justify-between items-center font-mono text-[10px]">
-                                          <span className="text-on-surface-variant/60">Severity</span>
-                                          <span className={`px-1.5 py-0.5 rounded-sm font-bold ${
-                                            f.severity === "Severe" 
-                                              ? "bg-red-500/10 text-red-400 border border-red-500/20" 
-                                              : f.severity === "Moderate" 
-                                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" 
-                                              : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                          }`}>
-                                            {f.severity}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-
-                              {/* Clinical Summary Block */}
-                              <div className="flex flex-col gap-2 mt-2">
-                                <label className="text-[10px] text-on-surface-variant font-bold tracking-[0.12em] uppercase">Radiologist Summary</label>
-                                <div className="bg-surface-container-low/40 p-3 rounded-md border border-white/5 text-[12px] text-on-surface-variant leading-relaxed">
-                                  {activeScan.summary}
-                                </div>
-                              </div>
-
-                              {/* Clinical Recommendations */}
-                              <div className="flex flex-col gap-2 mt-2">
-                                <label className="text-[10px] text-on-surface-variant font-bold tracking-[0.12em] uppercase flex items-center gap-1.5">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-secondary-container shrink-0" />
-                                  Suggested Clinical Directives
-                                </label>
-                                <ul className="flex flex-col gap-1.5">
-                                  {activeScan.recommendations.map((rec, index) => (
-                                    <li key={index} className="text-[11px] text-on-surface-variant leading-relaxed flex items-start gap-1.5">
-                                      <span className="text-secondary-container font-bold select-none shrink-0">•</span>
-                                      <span>{rec}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            </div>
-
-                            {/* Summary diagnostic specs */}
-                            <div className="border-t border-white/5 pt-3 mt-4 flex justify-between items-center text-[9px] font-mono text-on-surface-variant/40 shrink-0">
-                              <span>Latency: {activeScan.metrics.lat}</span>
-                              <span>Accuracy: {activeScan.metrics.acc}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex-1 flex flex-col min-h-0 justify-between p-4 bg-surface/20">
-                            {/* Chat Header controls */}
-                            <div className="flex justify-between items-center pb-2.5 border-b border-white/5 shrink-0 mb-3">
-                              <div className="flex items-center gap-2">
-                                <span className="w-2 h-2 rounded-full bg-secondary-container animate-pulse" />
-                                <span className="text-[11px] font-mono text-on-surface-variant/80">Xynapse Co-Pilot</span>
-                              </div>
-                              {(chatHistory[selectedScanId] || []).length > 0 && (
-                                <button
-                                  onClick={handleClearChatHistory}
-                                  className="text-[10px] font-mono text-error hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                  Clear Chat
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Chat messages viewport */}
-                            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1.5 scrollbar-thin select-text">
-                              {(chatHistory[selectedScanId] || []).length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center p-4 py-8">
-                                  <div className="w-12 h-12 rounded-full bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center mb-3">
-                                    <Sparkles className="w-6 h-6 text-secondary-container animate-[pulse_2.5s_infinite]" />
-                                  </div>
-                                  <span className="font-semibold text-primary text-[13px] tracking-wide">Interactive AI Consultation</span>
-                                  <p className="text-[11px] text-on-surface-variant/75 mt-1.5 max-w-[240px] leading-relaxed">
-                                    Ask anything about {activeScan.patientName}'s scan. Verify findings, request explanations, or formulate discharge queries.
-                                  </p>
-                                  
-                                  {/* Suggestions Container inside empty state */}
-                                  <div className="w-full mt-6 space-y-2">
-                                    <span className="text-[9px] font-mono text-on-surface-variant/50 uppercase tracking-widest block text-left">Suggested Questions</span>
-                                    <div className="flex flex-col gap-2">
-                                      {[
-                                        "Explain findings in simple terms",
-                                        "What are the recommended clinical next steps?",
-                                        activeScan.findings.length > 0 ? "Are the findings moderate or severe?" : "Confirm if lungs are clear"
-                                      ].map((chip, idx) => (
-                                        <button
-                                          key={idx}
-                                          onClick={() => handleSendChatMessage(undefined, chip)}
-                                          className="w-full text-left p-2.5 bg-surface-container-low hover:bg-surface-container border border-white/5 hover:border-secondary-container/30 text-on-surface-variant hover:text-primary text-[11px] rounded transition-all duration-200 cursor-pointer"
-                                        >
-                                          {chip} &rarr;
-                                        </button>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  {/* Chat bubble list */}
-                                  {(chatHistory[selectedScanId] || []).map((msg, index) => {
-                                    const isUser = msg.role === "user";
-                                    return (
-                                      <div
-                                        key={index}
-                                        className={`flex flex-col max-w-[85%] ${isUser ? "ml-auto items-end" : "mr-auto items-start"} animate-fade-in-up`}
-                                      >
-                                        <div
-                                          className={`p-3 rounded-lg text-[12px] leading-relaxed shadow-sm ${
-                                            isUser
-                                              ? "bg-secondary-container text-on-secondary-container rounded-tr-none font-medium"
-                                              : "bg-surface-container-high border border-white/5 text-on-surface rounded-tl-none font-normal"
-                                          }`}
-                                        >
-                                          {/* Handle formatting for newlines cleanly */}
-                                          {msg.text.split("\n").map((line, lIdx) => (
-                                            <p key={lIdx} className={lIdx > 0 ? "mt-1.5" : ""}>
-                                              {line}
-                                            </p>
-                                          ))}
-                                        </div>
-                                        <span className="text-[9px] font-mono text-on-surface-variant/40 mt-1 uppercase tracking-wider">
-                                          {isUser ? "You" : "AI"}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                  
-                                  {/* Loading Typist indicator */}
-                                  {isChatLoading && (
-                                    <div className="flex flex-col max-w-[85%] mr-auto items-start animate-fade-in-up">
-                                      <div className="bg-surface-container-high border border-white/5 p-3 rounded-lg rounded-tl-none flex gap-1.5 items-center">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-bounce" style={{ animationDelay: "0ms" }} />
-                                        <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-bounce" style={{ animationDelay: "150ms" }} />
-                                        <span className="w-1.5 h-1.5 rounded-full bg-secondary-container animate-bounce" style={{ animationDelay: "300ms" }} />
-                                      </div>
-                                      <span className="text-[9px] font-mono text-on-surface-variant/40 mt-1 uppercase tracking-wider">AI Typing</span>
-                                    </div>
-                                  )}
-                                  <div ref={chatEndRef} />
-                                </>
-                              )}
-                            </div>
-
-                            {/* Suggestions mini tray (only visible when there are messages) */}
-                            {(chatHistory[selectedScanId] || []).length > 0 && (
-                              <div className="pt-2 flex gap-1.5 overflow-x-auto scrollbar-none whitespace-nowrap shrink-0 border-t border-white/5 mt-2 pb-1">
-                                {[
-                                  "Explain findings",
-                                  "Suggested next steps",
-                                  "Are results severe?"
-                                ].map((chip, idx) => (
-                                  <button
-                                    key={idx}
-                                    disabled={isChatLoading}
-                                    onClick={() => handleSendChatMessage(undefined, chip)}
-                                    className="px-2.5 py-1 bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-primary text-[10px] border border-white/5 rounded-md transition-all duration-200 select-none shrink-0 disabled:opacity-50 cursor-pointer"
-                                  >
-                                    {chip}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-
-                            {/* Text Input Row */}
-                            <form
-                              onSubmit={handleSendChatMessage}
-                              className="mt-3 pt-2.5 border-t border-white/5 flex gap-2 shrink-0 relative"
-                            >
-                              <input
-                                type="text"
-                                value={chatInput}
-                                onChange={(e) => setChatInput(e.target.value)}
-                                disabled={isChatLoading}
-                                placeholder={`Ask about ${activeScan.patientName.split(" ")[0]}...`}
-                                className="w-full bg-surface-container px-3.5 py-3 pr-10 text-[13px] border border-white/5 rounded-md text-primary focus:outline-none focus:border-secondary-container/60 placeholder:text-on-surface-variant/45 transition-colors disabled:opacity-50"
-                              />
-                              <button
-                                type="submit"
-                                disabled={isChatLoading || !chatInput.trim()}
-                                className="absolute right-2 top-[16px] text-secondary-container hover:text-primary transition-colors disabled:opacity-30 disabled:hover:text-secondary-container p-1 rounded cursor-pointer"
-                              >
-                                <Send className="w-4 h-4" />
-                              </button>
-                            </form>
-                          </div>
-                        )}
+                      {/* Metrics row */}
+                      <div className="absolute bottom-3 left-3 right-3 flex justify-between">
+                        <span className="text-[9px] font-mono px-2 py-1 rounded bg-surface-container/80 border border-white/5 text-secondary-container">{activeScan.metrics.acc}</span>
+                        <span className="text-[9px] font-mono px-2 py-1 rounded bg-surface-container/80 border border-white/5 text-on-surface-variant">{activeScan.metrics.lat}</span>
                       </div>
                     </div>
-
                   </div>
+
+                  {/* Findings + Report card */}
+                  <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col flex-1 overflow-hidden">
+                    {/* Findings Header */}
+                    <div className="flex border-b border-white/5 shrink-0 bg-surface-container-lowest/80 p-3 items-center justify-between">
+                      <div className="flex items-center gap-2 text-primary font-bold text-[11px] tracking-[0.1em] uppercase">
+                        <FileText className="w-3.5 h-3.5" />
+                        Clinical Findings
+                      </div>
+                      <span className="text-[9px] font-mono text-secondary-container bg-secondary-container/10 px-1.5 py-0.5 rounded border border-secondary-container/20">AI Generated</span>
+                    </div>
+
+                    {/* Report Content */}
+                    <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+                        <>
+                          {activeScan.findings.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center text-center p-4 rounded-lg border border-white/5 bg-emerald-500/5 flex-1">
+                              <CheckCircle2 className="w-7 h-7 text-emerald-400 mb-2" />
+                              <span className="text-emerald-400 font-bold text-[13px]">No Anomalies</span>
+                              <p className="text-[10px] text-on-surface-variant/60 mt-1 leading-relaxed">Both lung lobes, cardiac silhouette, and vertebral alignment are clear.</p>
+                            </div>
+                          ) : (
+                            activeScan.findings.map((f, i) => {
+                              const isSel = selectedFinding?.name === f.name;
+                              return (
+                                <div
+                                  key={i}
+                                  onClick={() => setSelectedFinding(f)}
+                                  className={`p-2.5 rounded-lg border cursor-pointer transition-all ${isSel ? "border-secondary-container/40 bg-surface-container-high" : "border-white/5 bg-surface-container-low/30 hover:border-white/12"}`}
+                                >
+                                  <div className="flex justify-between items-start mb-1">
+                                    <span className="font-bold text-primary text-[12px]">{f.name}</span>
+                                    <span className="font-data-mono text-[10px] text-secondary-container font-bold">{(f.confidence * 100).toFixed(1)}%</span>
+                                  </div>
+                                  <p className="text-[10px] text-on-surface-variant leading-relaxed mb-2">{f.description}</p>
+                                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                                    f.severity === "Severe" ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                    : f.severity === "Moderate" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                    : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                  }`}>{f.severity}</span>
+                                </div>
+                              );
+                            })
+                          )}
+
+                          {/* Summary */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] text-on-surface-variant/60 font-bold tracking-[0.12em] uppercase">Summary</label>
+                            <div className="text-[10px] text-on-surface-variant leading-relaxed p-2.5 rounded-lg bg-surface-container/30 border border-white/5">
+                              {activeScan.summary}
+                            </div>
+                          </div>
+
+                          {/* Recommendations */}
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-[9px] text-on-surface-variant/60 font-bold tracking-[0.12em] uppercase flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3 text-secondary-container" />
+                              Clinical Directives
+                            </label>
+                            <ul className="flex flex-col gap-1.5">
+                              {activeScan.recommendations.map((rec, i) => (
+                                <li key={i} className="flex items-start gap-1.5 text-[10px] text-on-surface-variant leading-relaxed">
+                                  <span className="text-secondary-container font-bold shrink-0 mt-0.5">›</span>
+                                  {rec}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+
+                          <div className="flex justify-between text-[9px] font-mono text-on-surface-variant/30 pt-1 border-t border-white/5 mt-1">
+                            <span>{activeScan.metrics.lat}</span>
+                            <span>{activeScan.metrics.acc}</span>
+                          </div>
+                        </>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 </div>
 
               </div>
@@ -1117,11 +1085,11 @@ Content-Type: application/json
       <footer className="w-full py-10 bg-surface-container-lowest border-t border-white/5 font-label-caps text-label-caps select-none mt-auto">
         <div className="max-w-[1440px] mx-auto px-6 md:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-2.5 font-headline-md text-headline-md font-bold text-primary tracking-tight shrink-0">
-            <img 
-              alt="Xynapse Logo" 
-              className="w-[70px] h-[70px] object-contain" 
-              src="/assets/logo/logo.png"
-            />
+          <img 
+  alt="Xynapse Logo" 
+  className="w-[70px] h-[70px] object-contain" 
+  src={logo}
+/>
             <span className="text-sm">Xynapse</span>
           </div>
 
