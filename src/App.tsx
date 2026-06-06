@@ -26,7 +26,6 @@ import {
 import { PRESET_SCANS, TEAM_MEMBERS, LUNG_SVG_STENCIL, LUNG_SVG_STENCIL_CARDIOMEGALY, LUNG_SVG_STENCIL_NORMAL } from "./data/presets";
 import { ActiveSection, Scan, Finding } from "./types";
 import { motion, AnimatePresence } from "motion/react";
-import logo from "./assets/logo/logo.png";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home");
@@ -288,7 +287,7 @@ export default function App() {
             <img 
   alt="Xynapse Logo" 
   className="w-[60px] h-[60px] object-contain" 
-  src={logo}
+  src="/logo.png"
 />
             <span className="tracking-wide">Xynapse</span>
           </div>
@@ -1088,7 +1087,7 @@ Content-Type: application/json
           <img 
   alt="Xynapse Logo" 
   className="w-[70px] h-[70px] object-contain" 
-  src={logo}
+  src="/logo.png"
 />
             <span className="text-sm">Xynapse</span>
           </div>
