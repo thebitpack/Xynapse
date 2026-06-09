@@ -35,6 +35,8 @@ export default function App() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [hasApiKey, setHasApiKey] = useState<boolean>(true);
+  const [leftPanelOpen, setLeftPanelOpen] = useState<boolean>(true);
+  const [rightPanelOpen, setRightPanelOpen] = useState<boolean>(true);
   
   // Image viewer filters & manipulation
   const [zoom, setZoom] = useState<number>(1.0);
@@ -114,8 +116,22 @@ export default function App() {
     }));
   };
 
+  const handleDeleteScan = (e: React.MouseEvent, scanId: string) => {
+    e.stopPropagation();
+    setScans(prev => prev.filter(s => s.id !== scanId));
+    if (selectedScanId === scanId) {
+      setSelectedScanId("new");
+    }
+    setChatHistory(prev => {
+      const updated = { ...prev };
+      delete updated[scanId];
+      return updated;
+    });
+  };
+
   // Form states for manual patient meta ingestion
   const [newPatientName, setNewPatientName] = useState<string>("");
+  const [newPatientReport, setNewPatientReport] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Selected scan detail
@@ -123,10 +139,10 @@ export default function App() {
 
   // Fetch server status and check API key configuration
   useEffect(() => {
-    fetch("/api/health")
+    fetch("https://xynapse-backend-production.up.railway.app/health")
       .then(res => res.json())
       .then(data => {
-        setHasApiKey(data.hasApiKey);
+        setHasApiKey(data.hasApiKey ?? true);
       })
       .catch(error => {
         console.error("Health check failed:", error);
@@ -174,10 +190,11 @@ export default function App() {
     }
   };
 
-  // Convert uploaded image file to base64 and call analysis service
+  // Read file as base64 for the image viewer, then call analysis with raw File for FormData
   const handleFileSelected = (file: File) => {
     setUploadError(null);
-    
+    console.log("[Xynapse] handleFileSelected →", { name: file.name, type: file.type, size: file.size });
+
     // Size check (max 20MB for immediate reliable analysis in standard preview)
     if (file.size > 20 * 1024 * 1024) {
       setUploadError("File exceeds 20MB limit. Please upload a compressed PNG or JPG.");
@@ -188,9 +205,12 @@ export default function App() {
     reader.readAsDataURL(file);
     reader.onloadend = () => {
       const base64Data = reader.result as string;
-      processAnalysisRequest(base64Data, file.name, file.type, file.size);
+      console.log("[Xynapse] FileReader done — base64 length:", base64Data.length);
+      // Pass both the base64 string (for the image viewer) and the raw File (for FormData)
+      processAnalysisRequest(base64Data, file, file.name, file.type, file.size, newPatientReport);
     };
     reader.onerror = () => {
+      console.error("[Xynapse] FileReader error");
       setUploadError("Error reading the local image file. Please try another one.");
     };
   };
@@ -205,54 +225,129 @@ export default function App() {
     }
   };
 
-  // Perform Gemini AI Request
-  const processAnalysisRequest = async (base64Image: string, fileName: string, mimeType: string, rawSize: number) => {
+  // Send image to Flask /api/predict via FormData and map response into Scan structure
+  const processAnalysisRequest = async (
+    base64Image: string,
+    rawFile: File,
+    fileName: string,
+    mimeType: string,
+    rawSize: number,
+    reportText?: string
+  ) => {
     setIsAnalyzing(true);
     setUploadError(null);
 
     const formattedSize = `${(rawSize / (1024 * 1024)).toFixed(1)} MB`;
     const patientLabel = newPatientName.trim() || `Patient #${Math.floor(1000 + Math.random() * 9000)}`;
+    console.log("[Xynapse] processAnalysisRequest start →", { fileName, mimeType, formattedSize, patientLabel });
 
     try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: base64Image,
-          mimeType,
-          patientName: patientLabel
-        })
-      });
+      // Build multipart/form-data payload for Flask backend
+      const formData = new FormData();
+      formData.append("image", rawFile);
+      if (reportText && reportText.trim()) {
+        formData.append("report", reportText.trim());
+      }
+      console.log("[Xynapse] Sending FormData to /api/predict …");
+
+      const response = await fetch(
+        "https://xynapse-backend-production.up.railway.app/api/predict",
+        {
+          method: "POST",
+          body: formData
+          // NOTE: Do NOT set Content-Type header — browser sets it automatically with the boundary
+        }
+      );
+
+      console.log("[Xynapse] /api/predict HTTP status:", response.status, response.statusText);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || "Analysis request failed.");
+        const errorData = await response.json().catch(() => ({}));
+        console.error("[Xynapse] /api/predict error body:", errorData);
+        throw new Error(errorData.error || `Server returned ${response.status}`);
       }
 
       const results = await response.json();
-      
+      console.log("[Xynapse] /api/predict raw response:", JSON.stringify(results, null, 2));
+
+      // ── Map Flask response fields → Scan object ──────────────────────────────
+      // Expected Flask shape: { new_model: { time, result: { probs, detected, predictions } } }
+      const modelResult = results?.new_model?.result ?? {};
+      console.log("[Xynapse] modelResult extracted:", modelResult);
+
+      const probs: Record<string, number> = modelResult.probs ?? {};
+      const detected: string[] = modelResult.detected ?? [];
+      const predictions: Record<string, string> = modelResult.predictions ?? {};
+      const inferenceTime: number = results?.new_model?.time ?? 0;
+      console.log("[Xynapse] Fields → probs:", probs, "| detected:", detected, "| inferenceTime:", inferenceTime);
+
+      // Build findings from detected conditions + their probabilities
+      const findings: import("./types").Finding[] = detected.map((condition) => {
+        const confidence = probs[condition] ?? 0;
+        const predLabel = predictions[condition] ?? "Detected";
+        const severityMap: Record<string, "Mild" | "Moderate" | "Severe"> = {
+          Pneumonia: "Severe",
+          "Pleural Effusion": "Moderate",
+          Cardiomegaly: "Moderate",
+          Atelectasis: "Mild",
+          Edema: "Moderate",
+          Consolidation: "Severe",
+        };
+        return {
+          name: condition,
+          confidence,
+          severity: severityMap[condition] ?? (confidence > 0.75 ? "Severe" : confidence > 0.5 ? "Moderate" : "Mild"),
+          description: `${predLabel} — model confidence: ${(confidence * 100).toFixed(1)}%.`,
+          location: { x: 20, y: 20, width: 30, height: 30 } // placeholder bbox
+        };
+      });
+
+      // Build a textual summary from findings
+      const summary =
+        detected.length > 0
+          ? `AI analysis identified ${detected.length} finding(s): ${detected.join(", ")}. Review each finding and correlate with clinical presentation.`
+          : "No pathological findings detected. Lung fields, cardiac silhouette, and bony structures appear within normal limits.";
+
+      // Build recommendations
+      const recommendations =
+        detected.length > 0
+          ? [
+              `Prioritize review of: ${detected.join(", ")}.`,
+              "Correlate findings with patient history and clinical examination.",
+              "Consider follow-up imaging if clinically indicated."
+            ]
+          : ["No urgent therapeutic directives noted. Routine follow-up as clinically appropriate."];
+
       const newScanRecord: Scan = {
         id: `scan_${Date.now()}`,
-        patientName: results.patientName || patientLabel,
+        patientName: patientLabel,
         fileName,
         fileSize: formattedSize,
         date: "Just now",
-        imageUrl: base64Image, // Use base64 string directly for visual rendering inside the viewer card
-        findings: results.findings || [],
-        summary: results.summary || "Analysis returned successfully with no major anomalies detected.",
-        recommendations: results.recommendations || ["No urgent therapeutic directives noted."],
-        metrics: results.metrics || { acc: "94.2%", lat: "450ms" },
-        isSimulated: results.isSimulated
+        imageUrl: base64Image, // base64 string for visual rendering in the viewer
+        findings,
+        summary,
+        recommendations,
+        metrics: {
+          acc: detected.length > 0
+            ? `${(Math.max(...Object.values(probs)) * 100).toFixed(1)}%`
+            : "Clear",
+          lat: `${inferenceTime.toFixed ? inferenceTime.toFixed(0) : inferenceTime}ms`
+        },
+        isSimulated: false
       };
+
+      console.log("[Xynapse] Built Scan record:", { id: newScanRecord.id, findings: newScanRecord.findings.length, metrics: newScanRecord.metrics, summary: newScanRecord.summary.slice(0, 80) });
 
       setScans(prev => [newScanRecord, ...prev]);
       setSelectedScanId(newScanRecord.id);
-      
-      // Reset text field
+
+      // Reset patient name and report fields
       setNewPatientName("");
+      setNewPatientReport("");
     } catch (err: any) {
-      console.error(err);
-      setUploadError(err.message || "Something went wrong during analysis. Verify your network or credentials.");
+      console.error("[Xynapse] processAnalysisRequest ERROR:", err?.message ?? err);
+      setUploadError(err.message || "Something went wrong during analysis. Verify your network or API endpoint.");
     } finally {
       setIsAnalyzing(false);
     }
@@ -373,7 +468,7 @@ export default function App() {
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary-fixed/5 to-transparent pointer-events-none" />
                   
                   {/* Decorative Scan Lines */}
-                  <div className="absolute top-0 left-0 w-full h-[2px] bg-secondary-container/20 shadow-[0_0_15px_#00e3fd] animate-[ping_4s_infinite]" />
+                  <div className="absolute top-0 left-0 w-full h-[2px] bg-secondary-container/20 animate-[ping_4s_infinite]" />
                   
                   <div className="w-[260px] h-[260px] lg:w-[300px] lg:h-[300px] flex items-center justify-center relative">
                     {renderLungStencil("pleural_effusion")}
@@ -437,66 +532,107 @@ export default function App() {
                 )}
               </div>
 
-              {/* 3-column grid layout */}
-              <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr_340px] gap-4" style={{ height: "calc(100vh - 220px)", minHeight: "640px", overflow: "hidden" }}>
+              {/* 3-column flex layout — left and right panels are collapsible */}
+              <div className="flex gap-3" style={{ height: "calc(100vh - 220px)", minHeight: "640px", overflow: "hidden" }}>
 
-                {/* ── COL 1: Upload + Scan History ── */}
-                <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col gap-4 p-4 h-full overflow-hidden">
-                  {/* Scan list */}
-                  <div className="flex flex-col gap-2 flex-1 min-h-0">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[9px] font-bold text-on-surface-variant tracking-[0.14em] uppercase">Radiograph Queue</span>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[9px] font-mono text-on-surface-variant/60 bg-surface-container px-1.5 py-0.5 rounded">{scans.length}</span>
-                        <button
-                          onClick={() => setSelectedScanId("new")}
-                          title="New Upload"
-                          className={`w-5 h-5 rounded flex items-center justify-center transition-all duration-200 ${
-                            selectedScanId === "new"
-                              ? "bg-secondary-container text-on-secondary-container"
-                              : "bg-surface-container border border-white/10 text-on-surface-variant hover:text-primary hover:border-secondary-container/40"
-                          }`}
-                        >
-                          <Upload className="w-2.5 h-2.5" />
-                        </button>
+                {/* ── COL 1: Radiograph Queue (collapsible) ── */}
+                <motion.div
+                  animate={{ width: leftPanelOpen ? 280 : 44 }}
+                  transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                  className={`flex flex-col h-full overflow-hidden shrink-0 relative ${leftPanelOpen ? "bg-surface-container-lowest/70 rounded-xl border border-white/5" : "bg-transparent border-transparent"}`}
+                  style={{ minWidth: 44 }}
+                >
+
+                  {/* Collapsed icon rail — mirrors right panel exactly */}
+                  {!leftPanelOpen && (
+                    <div className="flex flex-col items-center gap-3 py-3 h-full">
+                      <button
+                        onClick={() => setLeftPanelOpen(true)}
+                        title="Expand queue"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 transition-all duration-200"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M3.5 2L6.5 5L3.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <div className="w-px flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+                      <button
+                        onClick={() => setLeftPanelOpen(true)}
+                        title="Radiograph Queue"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/40 hover:text-secondary-container hover:border-secondary-container/30 transition-all duration-200"
+                      >
+                        <Activity className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setLeftPanelOpen(true)}
+                        title="Patient Scans"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/40 hover:text-secondary-container hover:border-secondary-container/30 transition-all duration-200"
+                      >
+                        <Users className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="w-px h-4 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+                    </div>
+                  )}
+
+                  {/* Expanded panel */}
+                  {leftPanelOpen && (
+                    <div className="flex flex-col gap-4 p-4 h-full overflow-hidden">
+                      {/* Collapse toggle — mirrors right panel's absolute button position */}
+                      <button
+                        onClick={() => setLeftPanelOpen(false)}
+                        title="Collapse queue"
+                        className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center bg-surface-container border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M6.5 2L3.5 5L6.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <div className="flex flex-col gap-2 flex-1 min-h-0">
+                        <div className="flex justify-between items-center pr-2">
+                          <span className="text-[9px] font-bold text-on-surface-variant tracking-[0.14em] uppercase">Radiograph Queue</span>
+                          <span className="text-[9px] font-mono text-on-surface-variant/60 bg-surface-container px-1.5 py-0.5 rounded">{scans.length}</span>
+                        </div>
+                        <div className="flex flex-col gap-1.5 overflow-y-auto pr-0.5 flex-1 min-h-0">
+                          {scans.map((scan) => {
+                            const isSelected = scan.id === selectedScanId;
+                            const hasFindings = scan.findings.length > 0;
+                            return (
+                              <div
+                                key={scan.id}
+                                onClick={() => setSelectedScanId(scan.id)}
+                                className={`p-2.5 rounded-lg border transition-all duration-200 cursor-pointer ${isSelected ? "bg-surface-container-high border-secondary-container/35 shadow-[0_0_12px_rgba(0,227,253,0.06)]" : "bg-surface-container-low/40 border-white/4 hover:bg-surface-container hover:border-white/10"}`}
+                              >
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="text-primary text-[12px] font-semibold truncate max-w-[120px]">{scan.patientName}</span>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className={`w-1.5 h-1.5 rounded-full ${hasFindings ? "bg-secondary-container animate-pulse" : "bg-emerald-400"}`} />
+                                    <span className={`font-data-mono text-[9px] uppercase font-bold ${hasFindings ? "text-secondary-container" : "text-emerald-400"}`}>
+                                      {hasFindings ? scan.findings[0].name.split(" ")[0] : "Clear"}
+                                    </span>
+                                    <button
+                                      onClick={(e) => handleDeleteScan(e, scan.id)}
+                                      title="Remove scan"
+                                      className="w-4 h-4 rounded flex items-center justify-center text-on-surface-variant/30 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150 ml-0.5"
+                                    >
+                                      <Trash2 className="w-2.5 h-2.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between text-[9px] text-on-surface-variant/55 font-mono">
+                                  <span className="truncate max-w-[130px]">{scan.fileName}</span>
+                                  <span>{scan.date}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-1.5 overflow-y-auto pr-0.5 flex-1 min-h-0">
-                      {scans.map((scan) => {
-                        const isSelected = scan.id === selectedScanId;
-                        const hasFindings = scan.findings.length > 0;
-                        return (
-                          <div
-                            key={scan.id}
-                            onClick={() => setSelectedScanId(scan.id)}
-                            className={`p-2.5 rounded-lg border transition-all duration-200 cursor-pointer ${
-                              isSelected
-                                ? "bg-surface-container-high border-secondary-container/35 shadow-[0_0_12px_rgba(0,227,253,0.06)]"
-                                : "bg-surface-container-low/40 border-white/4 hover:bg-surface-container hover:border-white/10"
-                            }`}
-                          >
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-primary text-[12px] font-semibold truncate max-w-[150px]">{scan.patientName}</span>
-                              <div className="flex items-center gap-1 shrink-0">
-                                <span className={`w-1.5 h-1.5 rounded-full ${hasFindings ? "bg-secondary-container animate-pulse" : "bg-emerald-400"}`} />
-                                <span className={`font-data-mono text-[9px] uppercase font-bold ${hasFindings ? "text-secondary-container" : "text-emerald-400"}`}>
-                                  {hasFindings ? scan.findings[0].name.split(" ")[0] : "Clear"}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex justify-between text-[9px] text-on-surface-variant/55 font-mono">
-                              <span className="truncate max-w-[130px]">{scan.fileName}</span>
-                              <span>{scan.date}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
+                  )}
+                </motion.div>
 
                 {/* ── COL 2: HERO — AI Chatbot ── */}
-                <div className="relative rounded-xl overflow-hidden flex flex-col border border-white/5 shadow-[0_0_60px_rgba(0,227,253,0.04)] h-full" style={{ background: "linear-gradient(160deg, #0d0d16 0%, #13131b 60%, #0d1018 100%)" }}>
+                <div className="relative rounded-xl overflow-hidden flex flex-col border border-white/5 shadow-[0_0_60px_rgba(0,227,253,0.04)] h-full flex-1 min-w-0" style={{ background: "linear-gradient(160deg, #0d0d16 0%, #13131b 60%, #0d1018 100%)" }}>
 
                   {/* Ambient glow top-center */}
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[340px] h-[1px] bg-gradient-to-r from-transparent via-secondary-container/40 to-transparent" />
@@ -522,6 +658,17 @@ export default function App() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setSelectedScanId("new")}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all duration-200 ${
+                          selectedScanId === "new"
+                            ? "bg-[#0b2b5c] text-white border border-[#1a3d7c]"
+                            : "bg-[#0b2b5c]/40 text-white/80 border border-[#0b2b5c]/30 hover:bg-[#0b2b5c]/70 hover:text-white"
+                        }`}
+                      >
+                        <Upload className="w-3.5 h-3.5" />
+                        Start New Diagnosis
+                      </button>
                       {(chatHistory[selectedScanId] || []).length > 0 && (
                         <button
                           onClick={handleClearChatHistory}
@@ -547,13 +694,31 @@ export default function App() {
                         
                         {/* Patient input */}
                         <div className="flex flex-col gap-2">
-                          <label className="text-[10px] font-bold text-on-surface-variant tracking-[0.14em] uppercase text-left">Patient Demographics</label>
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-on-surface-variant tracking-[0.14em] uppercase text-left">Patient Demographics</label>
+                            <span className="text-[9px] font-mono text-on-surface-variant/40 uppercase tracking-wider">Optional</span>
+                          </div>
                           <input
                             type="text"
                             value={newPatientName}
                             onChange={(e) => setNewPatientName(e.target.value)}
                             placeholder="Full Name or Patient ID"
                             className="w-full bg-surface-container px-4 py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors"
+                          />
+                        </div>
+
+                        {/* Clinical report / notes input (optional) */}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-on-surface-variant tracking-[0.14em] uppercase text-left">Clinical Notes</label>
+                            <span className="text-[9px] font-mono text-on-surface-variant/40 uppercase tracking-wider">Optional</span>
+                          </div>
+                          <textarea
+                            value={newPatientReport}
+                            onChange={(e) => setNewPatientReport(e.target.value)}
+                            placeholder="Paste prior radiology report, symptoms, or relevant clinical context…"
+                            rows={3}
+                            className="w-full bg-surface-container px-4 py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors resize-none leading-relaxed"
                           />
                         </div>
 
@@ -574,7 +739,7 @@ export default function App() {
                           {isAnalyzing ? (
                             <div className="flex flex-col items-center py-4">
                               <RefreshCw className="w-8 h-8 text-secondary-container animate-spin mb-4" />
-                              <span className="font-medium text-primary text-[14px]">Consulting Gemini...</span>
+                              <span className="font-medium text-primary text-[14px]">Consulting Xynapse...</span>
                               <span className="font-data-mono text-[10px] text-on-surface-variant/50 mt-1.5">Processing multi-modal inputs</span>
                             </div>
                           ) : (
@@ -746,9 +911,58 @@ export default function App() {
                   )}
                 </div>
 
-                {/* ── COL 3: Image Viewer + Findings ── */}
-                <div className="flex flex-col gap-3 h-full overflow-hidden">
-                  {selectedScanId === "new" ? (
+                {/* ── COL 3: Image Viewer + Findings (collapsible) ── */}
+                <motion.div
+                  animate={{ width: rightPanelOpen ? 340 : 44 }}
+                  transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                  className="flex flex-col h-full overflow-hidden shrink-0 relative gap-3"
+                  style={{ minWidth: 44 }}
+                >
+                  {/* Collapsed icon rail */}
+                  {!rightPanelOpen && (
+                    <div className="flex flex-col items-center gap-3 py-3 h-full">
+                      <button
+                        onClick={() => setRightPanelOpen(true)}
+                        title="Expand findings"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 transition-all duration-200"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M6.5 2L3.5 5L6.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <div className="w-px flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+                      <button
+                        onClick={() => setRightPanelOpen(true)}
+                        title="Image Viewer"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/40 hover:text-secondary-container hover:border-secondary-container/30 transition-all duration-200"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setRightPanelOpen(true)}
+                        title="Clinical Findings"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/40 hover:text-secondary-container hover:border-secondary-container/30 transition-all duration-200"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="w-px h-4 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
+                    </div>
+                  )}
+
+                  {/* Expanded state */}
+                  {rightPanelOpen && (
+                    <>
+                      {/* Collapse toggle */}
+                      <button
+                        onClick={() => setRightPanelOpen(false)}
+                        title="Collapse findings panel"
+                        className="absolute top-3 left-3 z-20 w-6 h-6 rounded-md flex items-center justify-center bg-surface-container border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                          <path d="M3.5 2L6.5 5L3.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    {selectedScanId === "new" ? (
                     <div className="h-full border border-dashed border-white/10 rounded-xl bg-surface-container-lowest/30 flex flex-col items-center justify-center text-center p-6 text-on-surface-variant/40">
                       <ImageIcon className="w-10 h-10 mb-4 opacity-20" />
                       <span className="text-[13px] font-medium text-on-surface-variant/60">Awaiting Radiograph</span>
@@ -918,7 +1132,9 @@ export default function App() {
                     </div>
                   </div>
                 )}
-                </div>
+                    </>
+                  )}
+                </motion.div>
 
               </div>
             </motion.section>
