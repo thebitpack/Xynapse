@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
-import { 
-  Activity, 
-  Upload, 
-  Image as ImageIcon, 
-  ArrowRight, 
-  RefreshCw, 
-  ZoomIn, 
-  ZoomOut, 
+import {
+  Activity,
+  Upload,
+  Image as ImageIcon,
+  ArrowRight,
+  RefreshCw,
+  ZoomIn,
+  ZoomOut,
   Contrast,
-  Code, 
-  BookOpen, 
-  User, 
-  Users, 
-  Compass, 
+  Code,
+  BookOpen,
+  User,
+  Users,
+  Compass,
   ExternalLink,
   Lock,
   CheckCircle2,
@@ -37,7 +37,7 @@ export default function App() {
   const [hasApiKey, setHasApiKey] = useState<boolean>(true);
   const [leftPanelOpen, setLeftPanelOpen] = useState<boolean>(true);
   const [rightPanelOpen, setRightPanelOpen] = useState<boolean>(true);
-  
+
   // Image viewer filters & manipulation
   const [zoom, setZoom] = useState<number>(1.0);
   const [contrastSetting, setContrastSetting] = useState<"normal" | "high" | "inverted">("normal");
@@ -65,7 +65,7 @@ export default function App() {
 
     const currentScanId = selectedScanId;
     const userMsg = { role: "user" as const, text: messageToSend };
-    
+
     // Update UI locally first
     setChatHistory(prev => ({
       ...prev,
@@ -312,10 +312,10 @@ export default function App() {
       const recommendations =
         detected.length > 0
           ? [
-              `Prioritize review of: ${detected.join(", ")}.`,
-              "Correlate findings with patient history and clinical examination.",
-              "Consider follow-up imaging if clinically indicated."
-            ]
+            `Prioritize review of: ${detected.join(", ")}.`,
+            "Correlate findings with patient history and clinical examination.",
+            "Consider follow-up imaging if clinically indicated."
+          ]
           : ["No urgent therapeutic directives noted. Routine follow-up as clinically appropriate."];
 
       const newScanRecord: Scan = {
@@ -375,16 +375,16 @@ export default function App() {
       <nav className="fixed top-0 left-0 w-full h-[64px] z-40 bg-surface/85 backdrop-blur-md border-b border-white/5 font-body-main text-body-main">
         <div className="flex justify-between items-center max-w-[1440px] mx-auto px-6 md:px-8 h-full">
           {/* Logo Brand */}
-          <div 
+          <div
             onClick={() => setActiveSection("home")}
-            className="flex items-center gap-2.5 cursor-pointer select-none font-headline-md text-headline-md font-bold text-primary tracking-tight shrink-0"
+            className="flex items-center gap-0.5 cursor-pointer select-none font-headline-md text-headline-md font-bold text-primary tracking-tight shrink-0"
           >
-            <img 
-  alt="Xynapse Logo" 
-  className="w-[60px] h-[60px] object-contain" 
-  src="/logo.png"
-/>
-            <span className="tracking-wide">Xynapse</span>
+            <img
+              alt="Xynapse Logo"
+              className="w-[70px] h-[70px] object-contain"
+              src="/logo.png"
+            />
+            <span className="tracking-wide text-[22px]">Xynapse</span>
           </div>
 
           {/* Navigation Links — centered */}
@@ -396,15 +396,14 @@ export default function App() {
                 <button
                   key={section}
                   onClick={() => setActiveSection(section)}
-                  className={`capitalize relative px-1 py-1.5 font-medium text-[13px] transition-all duration-300 ${
-                    isActive 
-                      ? "text-primary font-bold" 
-                      : "text-on-surface-variant hover:text-primary opacity-75 hover:opacity-100"
-                  }`}
+                  className={`capitalize relative px-1 py-1.5 font-medium text-[13px] transition-all duration-300 ${isActive
+                    ? "text-primary font-bold"
+                    : "text-on-surface-variant hover:text-primary opacity-75 hover:opacity-100"
+                    }`}
                 >
                   {label}
                   {isActive && (
-                    <motion.span 
+                    <motion.span
                       layoutId="nav-dot"
                       className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[5px] h-[5px] bg-secondary-container rounded-full"
                     />
@@ -416,7 +415,7 @@ export default function App() {
 
           {/* Trailing Action */}
           <div className="flex items-center gap-3 shrink-0">
-            <button 
+            <button
               onClick={() => setActiveSection("analysis")}
               className="bg-primary hover:bg-white/90 text-on-primary px-5 py-2 text-[13px] rounded-md font-medium transition-all duration-200 shadow-sm hover:shadow-md"
             >
@@ -431,7 +430,7 @@ export default function App() {
         <AnimatePresence mode="wait">
           {/* ================= HOME SECTION ================= */}
           {activeSection === "home" && (
-            <motion.section 
+            <motion.section
               key="home"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -449,13 +448,13 @@ export default function App() {
                     Advanced radiological insights powered by deep learning. Minimizing cognitive load for medical professionals through high-end software craftsmanship.
                   </p>
                   <div className="flex flex-wrap gap-4 pt-2">
-                    <button 
+                    <button
                       onClick={() => setActiveSection("analysis")}
                       className="bg-primary text-on-primary px-6 py-3 rounded-md font-semibold flex items-center gap-2.5 hover:opacity-95 duration-200 transition-all shadow-lg hover:shadow-cyan-950/20 text-[14px]"
                     >
                       Start Analysis <ArrowRight className="w-4 h-4" />
                     </button>
-                    <button 
+                    <button
                       onClick={() => setActiveSection("about")}
                       className="bg-transparent text-primary px-6 py-3 rounded-md glass-border-hi font-medium hover:bg-surface-bright duration-200 transition-all text-[14px]"
                     >
@@ -467,10 +466,10 @@ export default function App() {
                 {/* Chest X-ray Visual Poster */}
                 <div className="relative bg-surface rounded-lg glass-border h-[400px] lg:h-[430px] flex items-center justify-center overflow-hidden group shadow-[0_0_80px_20px_rgba(0,0,0,0.4)]">
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary-fixed/5 to-transparent pointer-events-none" />
-                  
+
                   {/* Decorative Scan Lines */}
                   <div className="absolute top-0 left-0 w-full h-[2px] bg-secondary-container/20 animate-[ping_4s_infinite]" />
-                  
+
                   <div className="w-[260px] h-[260px] lg:w-[300px] lg:h-[300px] flex items-center justify-center relative">
                     {renderLungStencil("pleural_effusion")}
                   </div>
@@ -553,7 +552,7 @@ export default function App() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 transition-all duration-200"
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                          <path d="M3 2.5L6 5L3 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M3 2.5L6 5L3 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                       <div className="w-px flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
@@ -585,11 +584,11 @@ export default function App() {
                         className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center bg-surface-container border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                          <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                       <div className="flex flex-col gap-2 flex-1 min-h-0">
-                        <div className="flex items-center gap-2 pr-2">
+                        <div className="flex items-center gap-2 pr-2 border-b border-white/5 pb-3 mb-1">
                           <span className="text-[9px] font-bold text-on-surface-variant tracking-[0.14em] uppercase">Radiograph Queue</span>
                           <span className="text-[9px] font-mono text-on-surface-variant/60 bg-surface-container px-1.5 py-0.5 rounded">{scans.length}</span>
                         </div>
@@ -660,11 +659,10 @@ export default function App() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => setSelectedScanId("new")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all duration-200 ${
-                          selectedScanId === "new"
-                            ? "bg-[#0b2b5c] text-white border border-[#1a3d7c]"
-                            : "bg-[#0b2b5c]/40 text-white/80 border border-[#0b2b5c]/30 hover:bg-[#0b2b5c]/70 hover:text-white"
-                        }`}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all duration-200 ${selectedScanId === "new"
+                          ? "bg-[#0b2b5c] text-white border border-[#1a3d7c]"
+                          : "bg-[#0b2b5c]/40 text-white/80 border border-[#0b2b5c]/30 hover:bg-[#0b2b5c]/70 hover:text-white"
+                          }`}
                       >
                         <Upload className="w-3.5 h-3.5" />
                         Start New Diagnosis
@@ -691,7 +689,7 @@ export default function App() {
                             Provide the patient's radiograph and ID to generate a comprehensive AI-driven clinical report.
                           </p>
                         </div>
-                        
+
                         {/* Patient input */}
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center justify-between">
@@ -729,11 +727,10 @@ export default function App() {
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
                           onClick={triggerFileInput}
-                          className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${
-                            dragActive
-                              ? "border-secondary-container bg-secondary-container/10 scale-[0.98]"
-                              : "border-outline-variant/40 hover:border-secondary-container/50 hover:bg-surface-container-low/80"
-                          }`}
+                          className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${dragActive
+                            ? "border-secondary-container bg-secondary-container/10 scale-[0.98]"
+                            : "border-outline-variant/40 hover:border-secondary-container/50 hover:bg-surface-container-low/80"
+                            }`}
                         >
                           <input type="file" ref={fileInputRef} onChange={handleFileInputChange} className="hidden" accept="image/*" />
                           {isAnalyzing ? (
@@ -817,11 +814,10 @@ export default function App() {
                                 </div>
                               )}
                               <div className={`max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-                                <div className={`px-4 py-3 rounded-2xl text-[13px] leading-relaxed ${
-                                  isUser
-                                    ? "rounded-tr-sm text-on-secondary-container font-medium"
-                                    : "rounded-tl-sm border border-white/5 text-on-surface"
-                                }`}
+                                <div className={`px-4 py-3 rounded-2xl text-[13px] leading-relaxed ${isUser
+                                  ? "rounded-tr-sm text-on-secondary-container font-medium"
+                                  : "rounded-tl-sm border border-white/5 text-on-surface"
+                                  }`}
                                   style={isUser
                                     ? { background: "linear-gradient(135deg, #00c8e0, #00e3fd)", color: "#001f24" }
                                     : { background: "rgba(255,255,255,0.04)" }
@@ -886,27 +882,27 @@ export default function App() {
                   {selectedScanId !== "new" && (
                     <div className="px-4 pb-4 pt-2 shrink-0 border-t border-white/5">
                       <form onSubmit={handleSendChatMessage} className="relative flex items-center">
-                      <input
-                        type="text"
-                        value={chatInput}
-                        onChange={(e) => setChatInput(e.target.value)}
-                        disabled={isChatLoading}
-                        placeholder={`Ask about ${activeScan.patientName.split(" ")[0]}'s scan...`}
-                        className="w-full py-3 pl-4 pr-12 text-[13px] rounded-xl border border-white/8 focus:border-secondary-container/50 focus:outline-none text-primary placeholder:text-on-surface-variant/35 transition-all disabled:opacity-50"
-                        style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(8px)" }}
-                      />
-                      <button
-                        type="submit"
-                        disabled={isChatLoading || !chatInput.trim()}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-30 cursor-pointer"
-                        style={{ background: chatInput.trim() ? "linear-gradient(135deg, #00c8e0, #00e3fd)" : "rgba(255,255,255,0.06)" }}
-                      >
-                        <Send className={`w-3.5 h-3.5 ${chatInput.trim() ? "text-[#001f24]" : "text-on-surface-variant"}`} />
-                      </button>
-                    </form>
-                    <p className="text-center text-[9px] font-mono text-on-surface-variant/25 mt-2">
-                      AI-generated clinical guidance · Not a substitute for professional diagnosis
-                    </p>
+                        <input
+                          type="text"
+                          value={chatInput}
+                          onChange={(e) => setChatInput(e.target.value)}
+                          disabled={isChatLoading}
+                          placeholder={`Ask about ${activeScan.patientName.split(" ")[0]}'s scan...`}
+                          className="w-full py-3 pl-4 pr-12 text-[13px] rounded-xl border border-white/8 focus:border-secondary-container/50 focus:outline-none text-primary placeholder:text-on-surface-variant/35 transition-all disabled:opacity-50"
+                          style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(8px)" }}
+                        />
+                        <button
+                          type="submit"
+                          disabled={isChatLoading || !chatInput.trim()}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 disabled:opacity-30 cursor-pointer"
+                          style={{ background: chatInput.trim() ? "linear-gradient(135deg, #00c8e0, #00e3fd)" : "rgba(255,255,255,0.06)" }}
+                        >
+                          <Send className={`w-3.5 h-3.5 ${chatInput.trim() ? "text-[#001f24]" : "text-on-surface-variant"}`} />
+                        </button>
+                      </form>
+                      <p className="text-center text-[9px] font-mono text-on-surface-variant/25 mt-2">
+                        AI-generated clinical guidance · Not a substitute for professional diagnosis
+                      </p>
                     </div>
                   )}
                 </div>
@@ -927,7 +923,7 @@ export default function App() {
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 transition-all duration-200"
                       >
                         <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                          <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
                       </button>
                       <div className="w-px flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
@@ -952,201 +948,200 @@ export default function App() {
                   {/* Expanded state */}
                   {rightPanelOpen && (
                     <>
-                    {selectedScanId === "new" ? (
-                    <div className="relative h-full border border-dashed border-white/10 rounded-xl bg-surface-container-lowest/30 flex flex-col items-center justify-center text-center p-6 text-on-surface-variant/40">
-                      <button
-                        onClick={() => setRightPanelOpen(false)}
-                        title="Collapse findings panel"
-                        className="absolute top-3 left-3 w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
-                        style={{ background: "rgba(255,255,255,0.03)" }}
-                      >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                          <path d="M6 2.5L3 5L6 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <ImageIcon className="w-10 h-10 mb-4 opacity-20" />
-                      <span className="text-[13px] font-medium text-on-surface-variant/60">Awaiting Radiograph</span>
-                      <p className="text-[10px] mt-2 max-w-[200px] leading-relaxed">
-                        Upload a scan in the central panel to generate clinical findings.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
-                      {/* Image viewer card */}
-                  <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col overflow-hidden" style={{ height: "300px", flexShrink: 0 }}>
-                    {/* Toolbar */}
-                    <div className="h-[38px] border-b border-white/5 flex items-center px-2 gap-1 bg-surface-container-lowest/80 shrink-0">
-                      {/* Collapse button — lives in the toolbar so it never overlaps other buttons */}
-                      <button
-                        onClick={() => setRightPanelOpen(false)}
-                        title="Collapse findings panel"
-                        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
-                        style={{ background: "rgba(255,255,255,0.03)" }}
-                      >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                          <path d="M6 2.5L3 5L6 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </button>
-                      <div className="w-[1px] h-3 bg-white/8 mx-1 shrink-0" />
-                      <button onClick={handleZoomIn} title="Zoom In" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
-                        <ZoomIn className="w-3 h-3" />
-                      </button>
-                      <button onClick={handleZoomOut} title="Zoom Out" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
-                        <ZoomOut className="w-3 h-3" />
-                      </button>
-                      <div className="w-[1px] h-3 bg-white/8 mx-1" />
-                      <button
-                        onClick={() => setContrastSetting(c => c === "normal" ? "high" : c === "high" ? "inverted" : "normal")}
-                        className={`p-1.5 rounded-md flex items-center gap-1 text-[10px] font-mono transition-all ${contrastSetting !== "normal" ? "text-secondary-container bg-secondary-container/10" : "text-on-surface-variant hover:text-primary"}`}
-                      >
-                        <Contrast className="w-3 h-3" />
-                        <span className="capitalize">{contrastSetting}</span>
-                      </button>
-                      <div className="w-[1px] h-3 bg-white/8 mx-1" />
-                      <button
-                        onClick={() => setShowCoordinates(!showCoordinates)}
-                        className={`p-1 text-[9px] font-mono rounded transition-all ${showCoordinates ? "text-primary" : "text-on-surface-variant/50"}`}
-                      >
-                        OVL:{showCoordinates ? "ON" : "OFF"}
-                      </button>
-                      <button onClick={handleResetFilters} className="ml-auto text-[9px] font-mono text-on-surface-variant/40 hover:text-primary transition-all p-1">
-                        Reset
-                      </button>
-                    </div>
-
-                    {/* Viewer area */}
-                    <div className="relative flex items-center justify-center flex-1 bg-surface-container-lowest/30" style={{ minHeight: 0 }}>
-                      <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
-                        <div
-                          className="w-full h-full flex items-center justify-center p-4 transition-transform duration-200"
-                          style={{
-                            transform: `scale(${zoom})`,
-                            filter: contrastSetting === "high"
-                              ? "contrast(1.45) brightness(0.9)"
-                              : contrastSetting === "inverted"
-                              ? "invert(1) contrast(1.15) brightness(0.95)"
-                              : "none"
-                          }}
-                        >
-                          {activeScan.imageUrl.startsWith("data:") ? (
-                            <img src={activeScan.imageUrl} alt="Chest Radiography" className="max-h-full max-w-full object-contain pointer-events-none select-none rounded" referrerPolicy="no-referrer" />
-                          ) : (
-                            renderLungStencil(activeScan.imageUrl)
-                          )}
+                      {selectedScanId === "new" ? (
+                        <div className="relative h-full border border-dashed border-white/10 rounded-xl bg-surface-container-lowest/30 flex flex-col items-center justify-center text-center p-6 text-on-surface-variant/40">
+                          <button
+                            onClick={() => setRightPanelOpen(false)}
+                            title="Collapse findings panel"
+                            className="absolute top-3 left-3 w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                            style={{ background: "rgba(255,255,255,0.03)" }}
+                          >
+                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                              <path d="M4 2.5L7 5L4 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                          <ImageIcon className="w-10 h-10 mb-4 opacity-20" />
+                          <span className="text-[13px] font-medium text-on-surface-variant/60">Awaiting Radiograph</span>
+                          <p className="text-[10px] mt-2 max-w-[200px] leading-relaxed">
+                            Upload a scan in the central panel to generate clinical findings.
+                          </p>
                         </div>
-
-                        {showCoordinates && activeScan.findings.map((f, index) => {
-                          const isSel = selectedFinding?.name === f.name;
-                          return (
-                            <div
-                              key={index}
-                              onClick={() => setSelectedFinding(f)}
-                              className={`absolute border cursor-pointer transition-all duration-300 ${isSel ? "border-secondary-container bg-secondary-container/10 ring-1 ring-secondary-container/20" : "border-secondary-container/40 bg-secondary-container/4 hover:border-secondary-container"}`}
-                              style={{ top: `${f.location.y}%`, left: `${f.location.x}%`, width: `${f.location.width}%`, height: `${f.location.height}%` }}
-                            >
-                              <div className="absolute -top-5 left-0 bg-secondary-container text-on-secondary-container font-data-mono text-[8px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wide">
-                                {f.name.split(" ")[0]} {(f.confidence * 100).toFixed(0)}%
-                              </div>
+                      ) : (
+                        <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
+                          {/* Image viewer card */}
+                          <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col overflow-hidden" style={{ height: "300px", flexShrink: 0 }}>
+                            {/* Toolbar */}
+                            <div className="h-[38px] border-b border-white/5 flex items-center px-2 gap-1 bg-surface-container-lowest/80 shrink-0">
+                              {/* Collapse button — lives in the toolbar so it never overlaps other buttons */}
+                              <button
+                                onClick={() => setRightPanelOpen(false)}
+                                title="Collapse findings panel"
+                                className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                                style={{ background: "rgba(255,255,255,0.03)" }}
+                              >
+                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                                  <path d="M4 2.5L7 5L4 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                              </button>
+                              <div className="w-[1px] h-3 bg-white/8 mx-1 shrink-0" />
+                              <button onClick={handleZoomIn} title="Zoom In" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
+                                <ZoomIn className="w-3 h-3" />
+                              </button>
+                              <button onClick={handleZoomOut} title="Zoom Out" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
+                                <ZoomOut className="w-3 h-3" />
+                              </button>
+                              <div className="w-[1px] h-3 bg-white/8 mx-1" />
+                              <button
+                                onClick={() => setContrastSetting(c => c === "normal" ? "high" : c === "high" ? "inverted" : "normal")}
+                                className={`p-1.5 rounded-md flex items-center gap-1 text-[10px] font-mono transition-all ${contrastSetting !== "normal" ? "text-secondary-container bg-secondary-container/10" : "text-on-surface-variant hover:text-primary"}`}
+                              >
+                                <Contrast className="w-3 h-3" />
+                                <span className="capitalize">{contrastSetting}</span>
+                              </button>
+                              <div className="w-[1px] h-3 bg-white/8 mx-1" />
+                              <button
+                                onClick={() => setShowCoordinates(!showCoordinates)}
+                                className={`p-1 text-[9px] font-mono rounded transition-all ${showCoordinates ? "text-primary" : "text-on-surface-variant/50"}`}
+                              >
+                                OVL:{showCoordinates ? "ON" : "OFF"}
+                              </button>
+                              <button onClick={handleResetFilters} className="ml-auto text-[9px] font-mono text-on-surface-variant/40 hover:text-primary transition-all p-1">
+                                Reset
+                              </button>
                             </div>
-                          );
-                        })}
-                      </div>
 
-                      {activeScan.isSimulated && (
-                        <div className="absolute top-3 left-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[9px] font-mono px-2 py-1 rounded flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          Demo
-                        </div>
-                      )}
-
-                      {/* Metrics row — show top confidence only when findings exist */}
-                      {activeScan.findings.length > 0 && (
-                        <div className="absolute bottom-3 left-3">
-                          <span className="text-[9px] font-mono px-2 py-1 rounded bg-surface-container/80 border border-white/5 text-secondary-container">
-                            {(Math.max(...activeScan.findings.map(f => f.confidence)) * 100).toFixed(1)}%
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Findings + Report card */}
-                  <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col flex-1 overflow-hidden">
-                    {/* Findings Header */}
-                    <div className="flex border-b border-white/5 shrink-0 bg-surface-container-lowest/80 p-3 items-center justify-between">
-                      <div className="flex items-center gap-2 text-primary font-bold text-[11px] tracking-[0.1em] uppercase">
-                        <FileText className="w-3.5 h-3.5" />
-                        Clinical Findings
-                      </div>
-                      <span className="text-[9px] font-mono text-secondary-container bg-secondary-container/10 px-1.5 py-0.5 rounded border border-secondary-container/20">AI Generated</span>
-                    </div>
-
-                    {/* Report Content */}
-                    <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
-                        <>
-                          {activeScan.findings.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center text-center p-4 rounded-lg border border-white/5 bg-emerald-500/5 flex-1">
-                              <CheckCircle2 className="w-7 h-7 text-emerald-400 mb-2" />
-                              <span className="text-emerald-400 font-bold text-[13px]">No Anomalies</span>
-                              <p className="text-[10px] text-on-surface-variant/60 mt-1 leading-relaxed">Both lung lobes, cardiac silhouette, and vertebral alignment are clear.</p>
-                            </div>
-                          ) : (
-                            [...activeScan.findings].sort((a, b) => b.confidence - a.confidence).map((f, i) => {
-                              const isSel = selectedFinding?.name === f.name;
-                              return (
+                            {/* Viewer area */}
+                            <div className="relative flex items-center justify-center flex-1 bg-surface-container-lowest/30" style={{ minHeight: 0 }}>
+                              <div className="relative w-full h-full overflow-hidden flex items-center justify-center">
                                 <div
-                                  key={i}
-                                  onClick={() => setSelectedFinding(f)}
-                                  className={`p-2.5 rounded-lg border cursor-pointer transition-all ${isSel ? "border-secondary-container/40 bg-surface-container-high" : "border-white/5 bg-surface-container-low/30 hover:border-white/12"}`}
+                                  className="w-full h-full flex items-center justify-center p-4 transition-transform duration-200"
+                                  style={{
+                                    transform: `scale(${zoom})`,
+                                    filter: contrastSetting === "high"
+                                      ? "contrast(1.45) brightness(0.9)"
+                                      : contrastSetting === "inverted"
+                                        ? "invert(1) contrast(1.15) brightness(0.95)"
+                                        : "none"
+                                  }}
                                 >
-                                  <div className="flex justify-between items-start mb-1">
-                                    <span className="font-bold text-primary text-[12px]">{f.name}</span>
-                                    <span className="font-data-mono text-[10px] text-secondary-container font-bold">{(f.confidence * 100).toFixed(1)}%</span>
-                                  </div>
-                                  <p className="text-[10px] text-on-surface-variant leading-relaxed mb-2">{f.description}</p>
-                                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${
-                                    f.severity === "Severe" ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                                    : f.severity === "Moderate" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                                    : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
-                                  }`}>{f.severity}</span>
+                                  {activeScan.imageUrl.startsWith("data:") ? (
+                                    <img src={activeScan.imageUrl} alt="Chest Radiography" className="max-h-full max-w-full object-contain pointer-events-none select-none rounded" referrerPolicy="no-referrer" />
+                                  ) : (
+                                    renderLungStencil(activeScan.imageUrl)
+                                  )}
                                 </div>
-                              );
-                            })
-                          )}
 
-                          {/* Summary */}
-                          <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] text-on-surface-variant/60 font-bold tracking-[0.12em] uppercase">Summary</label>
-                            <div className="text-[10px] text-on-surface-variant leading-relaxed p-2.5 rounded-lg bg-surface-container/30 border border-white/5">
-                              {activeScan.summary}
+                                {showCoordinates && activeScan.findings.map((f, index) => {
+                                  const isSel = selectedFinding?.name === f.name;
+                                  return (
+                                    <div
+                                      key={index}
+                                      onClick={() => setSelectedFinding(f)}
+                                      className={`absolute border cursor-pointer transition-all duration-300 ${isSel ? "border-secondary-container bg-secondary-container/10 ring-1 ring-secondary-container/20" : "border-secondary-container/40 bg-secondary-container/4 hover:border-secondary-container"}`}
+                                      style={{ top: `${f.location.y}%`, left: `${f.location.x}%`, width: `${f.location.width}%`, height: `${f.location.height}%` }}
+                                    >
+                                      <div className="absolute -top-5 left-0 bg-secondary-container text-on-secondary-container font-data-mono text-[8px] px-1.5 py-0.5 rounded-sm font-bold uppercase tracking-wide">
+                                        {f.name.split(" ")[0]} {(f.confidence * 100).toFixed(0)}%
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {activeScan.isSimulated && (
+                                <div className="absolute top-3 left-3 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[9px] font-mono px-2 py-1 rounded flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  Demo
+                                </div>
+                              )}
+
+                              {/* Metrics row — show top confidence only when findings exist */}
+                              {activeScan.findings.length > 0 && (
+                                <div className="absolute bottom-3 left-3">
+                                  <span className="text-[9px] font-mono px-2 py-1 rounded bg-surface-container/80 border border-white/5 text-secondary-container">
+                                    {(Math.max(...activeScan.findings.map(f => f.confidence)) * 100).toFixed(1)}%
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
-                          {/* Recommendations */}
-                          <div className="flex flex-col gap-1.5">
-                            <label className="text-[9px] text-on-surface-variant/60 font-bold tracking-[0.12em] uppercase flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3 text-secondary-container" />
-                              Clinical Directives
-                            </label>
-                            <ul className="flex flex-col gap-1.5">
-                              {activeScan.recommendations.map((rec, i) => (
-                                <li key={i} className="flex items-start gap-1.5 text-[10px] text-on-surface-variant leading-relaxed">
-                                  <span className="text-secondary-container font-bold shrink-0 mt-0.5">›</span>
-                                  {rec}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                          {/* Findings + Report card */}
+                          <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col flex-1 overflow-hidden">
+                            {/* Findings Header */}
+                            <div className="flex border-b border-white/5 shrink-0 bg-surface-container-lowest/80 p-3 items-center justify-between">
+                              <div className="flex items-center gap-2 text-primary font-bold text-[11px] tracking-[0.1em] uppercase">
+                                <FileText className="w-3.5 h-3.5" />
+                                Clinical Findings
+                              </div>
+                              <span className="text-[9px] font-mono text-secondary-container bg-secondary-container/10 px-1.5 py-0.5 rounded border border-secondary-container/20">AI Generated</span>
+                            </div>
 
-                          <div className="flex justify-between text-[9px] font-mono text-on-surface-variant/30 pt-1 border-t border-white/5 mt-1">
-                            <span>{activeScan.metrics.lat}</span>
-                            <span>{activeScan.metrics.acc}</span>
+                            {/* Report Content */}
+                            <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-3">
+                              <>
+                                {activeScan.findings.length === 0 ? (
+                                  <div className="flex flex-col items-center justify-center text-center p-4 rounded-lg border border-white/5 bg-emerald-500/5 flex-1">
+                                    <CheckCircle2 className="w-7 h-7 text-emerald-400 mb-2" />
+                                    <span className="text-emerald-400 font-bold text-[13px]">No Anomalies</span>
+                                    <p className="text-[10px] text-on-surface-variant/60 mt-1 leading-relaxed">Both lung lobes, cardiac silhouette, and vertebral alignment are clear.</p>
+                                  </div>
+                                ) : (
+                                  [...activeScan.findings].sort((a, b) => b.confidence - a.confidence).map((f, i) => {
+                                    const isSel = selectedFinding?.name === f.name;
+                                    return (
+                                      <div
+                                        key={i}
+                                        onClick={() => setSelectedFinding(f)}
+                                        className={`p-2.5 rounded-lg border cursor-pointer transition-all ${isSel ? "border-secondary-container/40 bg-surface-container-high" : "border-white/5 bg-surface-container-low/30 hover:border-white/12"}`}
+                                      >
+                                        <div className="flex justify-between items-start mb-1">
+                                          <span className="font-bold text-primary text-[12px]">{f.name}</span>
+                                          <span className="font-data-mono text-[10px] text-secondary-container font-bold">{(f.confidence * 100).toFixed(1)}%</span>
+                                        </div>
+                                        <p className="text-[10px] text-on-surface-variant leading-relaxed mb-2">{f.description}</p>
+                                        <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded font-bold ${f.severity === "Severe" ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                                          : f.severity === "Moderate" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                                            : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                                          }`}>{f.severity}</span>
+                                      </div>
+                                    );
+                                  })
+                                )}
+
+                                {/* Summary */}
+                                <div className="flex flex-col gap-1.5">
+                                  <label className="text-[9px] text-on-surface-variant/60 font-bold tracking-[0.12em] uppercase">Summary</label>
+                                  <div className="text-[10px] text-on-surface-variant leading-relaxed p-2.5 rounded-lg bg-surface-container/30 border border-white/5">
+                                    {activeScan.summary}
+                                  </div>
+                                </div>
+
+                                {/* Recommendations */}
+                                <div className="flex flex-col gap-1.5">
+                                  <label className="text-[9px] text-on-surface-variant/60 font-bold tracking-[0.12em] uppercase flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3 text-secondary-container" />
+                                    Clinical Directives
+                                  </label>
+                                  <ul className="flex flex-col gap-1.5">
+                                    {activeScan.recommendations.map((rec, i) => (
+                                      <li key={i} className="flex items-start gap-1.5 text-[10px] text-on-surface-variant leading-relaxed">
+                                        <span className="text-secondary-container font-bold shrink-0 mt-0.5">›</span>
+                                        {rec}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+
+                                <div className="flex justify-between text-[9px] font-mono text-on-surface-variant/30 pt-1 border-t border-white/5 mt-1">
+                                  <span>{activeScan.metrics.lat}</span>
+                                  <span>{activeScan.metrics.acc}</span>
+                                </div>
+                              </>
+                            </div>
                           </div>
-                        </>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                        </div>
+                      )}
                     </>
                   )}
                 </motion.div>
@@ -1157,7 +1152,7 @@ export default function App() {
 
           {/* ================= ABOUT SECTION ================= */}
           {activeSection === "about" && (
-            <motion.section 
+            <motion.section
               key="about"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1175,7 +1170,7 @@ export default function App() {
                 <p>
                   By presenting clear bounding-box coordinate systems and clinical-grade recommendations drafted automatically using generative intelligence templates, it dramatically reduces a specialist's reading latency, allowing them to allocate high-tier clinical attention where it's needed most.
                 </p>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 pt-5 border-t border-white/5">
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[10px] text-on-surface-variant/60 font-mono tracking-[0.12em] uppercase">Target Focus</span>
@@ -1192,7 +1187,7 @@ export default function App() {
 
           {/* ================= TEAM SECTION ================= */}
           {activeSection === "team" && (
-            <motion.section 
+            <motion.section
               key="team"
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -1200,21 +1195,21 @@ export default function App() {
               className="flex-1 py-10 flex flex-col justify-center max-w-5xl mx-auto w-full"
             >
               <h2 className="font-display-italic text-[48px] sm:text-[54px] text-primary mb-8 tracking-tight">The Team.</h2>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {TEAM_MEMBERS.map((member, index) => (
-                  <div 
-                    key={index} 
+                  <div
+                    key={index}
                     className="bg-surface-container-lowest rounded-lg p-6 border border-white/5 hover:border-secondary-container/20 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
                   >
                     <div>
                       {/* Avatar initial */}
                       <div className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-br from-secondary-fixed to-on-tertiary-container mb-4 flex items-center justify-center">
                         <div className="w-[38px] h-[38px] rounded-full bg-surface-container-high flex items-center justify-center text-primary font-bold font-mono text-[13px]">
-                           {member.avatar}
+                          {member.avatar}
                         </div>
                       </div>
-                      
+
                       <h3 className="text-primary text-[17px] font-bold leading-tight">{member.name}</h3>
                       <span className="text-secondary-container text-[11px] font-mono tracking-wide mt-1 block">
                         {member.role}
@@ -1226,7 +1221,7 @@ export default function App() {
 
                     <div className="flex flex-wrap gap-1.5 mt-6 pt-4 border-t border-white/5">
                       {member.skills.map((skill, si) => (
-                        <span 
+                        <span
                           key={si}
                           className="px-2.5 py-1 bg-surface-container-high text-secondary-fixed/95 text-[10px] font-mono rounded-md transition-colors duration-200 hover:bg-secondary-container/20 hover:text-white"
                         >
@@ -1242,7 +1237,7 @@ export default function App() {
 
           {/* ================= DOCS SECTION ================= */}
           {activeSection === "docs" && (
-            <motion.section 
+            <motion.section
               key="docs"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1271,7 +1266,7 @@ export default function App() {
                     <div className="flex flex-col gap-2">
                       <span className="text-[12px] font-bold text-primary">Python Inference Script</span>
                       <div className="bg-surface-container-low rounded-md p-4 border border-white/5 font-data-mono text-data-mono text-on-surface-variant/90 text-xs overflow-x-auto relative group">
-                        <button 
+                        <button
                           onClick={() => {
                             navigator.clipboard.writeText(`import xynapse\n\ model = xynapse.load("thorax-v2")\nresult = model.predict("patient_xray.dcm")\nprint(result.confidence)`);
                           }}
@@ -1314,12 +1309,12 @@ Content-Type: application/json
       {/* Shared Global Footer */}
       <footer className="w-full py-10 bg-surface-container-lowest border-t border-white/5 font-label-caps text-label-caps select-none mt-auto">
         <div className="max-w-[1440px] mx-auto px-6 md:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2.5 font-headline-md text-headline-md font-bold text-primary tracking-tight shrink-0">
-          <img 
-  alt="Xynapse Logo" 
-  className="w-[70px] h-[70px] object-contain" 
-  src="/logo.png"
-/>
+          <div className="flex items-center gap-0.5 font-headline-md text-headline-md font-bold text-primary tracking-tight shrink-0">
+            <img
+              alt="Xynapse Logo"
+              className="w-[70px] h-[70px] object-contain"
+              src="/logo.png"
+            />
             <span className="text-sm">Xynapse</span>
           </div>
 

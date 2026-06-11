@@ -41,7 +41,7 @@
   --font-body-main: "ITC Avant Garde Gothic", "Avant Garde Gothic", "Avant Garde", "Century Gothic", "TeXGyreAdventor", sans-serif;
   --font-label-caps: "ITC Avant Garde Gothic", "Avant Garde Gothic", "Avant Garde", "Century Gothic", "TeXGyreAdventor", sans-serif;
   --font-data-mono: "JetBrains Mono", monospace;
-  
+
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -55,13 +55,16 @@
   width: 4px;
   height: 4px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
@@ -70,6 +73,7 @@
 .glass-border {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
+
 .glass-border-hi {
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
@@ -93,6 +97,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -110,7 +115,12 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-headline-lg), "Poppins", sans-serif;
 }
 
@@ -136,6 +146,7 @@ code {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-none {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -144,14 +155,16 @@ code {
 .scrollbar-thin::-webkit-scrollbar {
   width: 4px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.12);
   border-radius: 2px;
 }
+
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
-
