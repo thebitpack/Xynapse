@@ -1,4 +1,4 @@
-export type ActiveSection = "home" | "analysis" | "about" | "team" | "docs";
+export type ActiveSection = "home" | "analysis" | "team" | "about";
 
 export interface Finding {
   name: string;

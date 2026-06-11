@@ -389,8 +389,9 @@ export default function App() {
 
           {/* Navigation Links — centered */}
           <div className="hidden md:flex gap-6 lg:gap-8 items-center absolute left-1/2 -translate-x-1/2">
-            {(["home", "analysis", "about", "team", "docs"] as ActiveSection[]).map((section) => {
+            {(["home", "analysis", "team", "about"] as ActiveSection[]).map((section) => {
               const isActive = activeSection === section;
+              const label = section === "about" ? "Research" : section;
               return (
                 <button
                   key={section}
@@ -401,7 +402,7 @@ export default function App() {
                       : "text-on-surface-variant hover:text-primary opacity-75 hover:opacity-100"
                   }`}
                 >
-                  {section}
+                  {label}
                   {isActive && (
                     <motion.span 
                       layoutId="nav-dot"
@@ -455,10 +456,10 @@ export default function App() {
                       Start Analysis <ArrowRight className="w-4 h-4" />
                     </button>
                     <button 
-                      onClick={() => setActiveSection("docs")}
+                      onClick={() => setActiveSection("about")}
                       className="bg-transparent text-primary px-6 py-3 rounded-md glass-border-hi font-medium hover:bg-surface-bright duration-200 transition-all text-[14px]"
                     >
-                      View Docs
+                      View Research
                     </button>
                   </div>
                 </div>
@@ -551,8 +552,8 @@ export default function App() {
                         title="Expand queue"
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 transition-all duration-200"
                       >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M3.5 2L6.5 5L3.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                          <path d="M3 2.5L6 5L3 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
                       <div className="w-px flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
@@ -583,12 +584,12 @@ export default function App() {
                         title="Collapse queue"
                         className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center bg-surface-container border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
                       >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M6.5 2L3.5 5L6.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                          <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
                       <div className="flex flex-col gap-2 flex-1 min-h-0">
-                        <div className="flex justify-between items-center pr-2">
+                        <div className="flex items-center gap-2 pr-2">
                           <span className="text-[9px] font-bold text-on-surface-variant tracking-[0.14em] uppercase">Radiograph Queue</span>
                           <span className="text-[9px] font-mono text-on-surface-variant/60 bg-surface-container px-1.5 py-0.5 rounded">{scans.length}</span>
                         </div>
@@ -648,8 +649,7 @@ export default function App() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-primary font-bold text-[14px] tracking-tight">Xynapse Co-Pilot</span>
-                          <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-secondary-container/10 text-secondary-container border border-secondary-container/20 uppercase tracking-widest">Gemini</span>
+                          <span className="text-primary font-bold text-[14px] tracking-tight">Xynapse Assistant</span>
                         </div>
                         <p className="text-[10px] text-on-surface-variant/70 mt-0.5">
                           Context: <span className="text-secondary-container/90">{selectedScanId === "new" ? "New Upload" : activeScan.patientName}</span> {selectedScanId !== "new" && `· ${activeScan.findings.length > 0 ? `${activeScan.findings.length} finding${activeScan.findings.length > 1 ? "s" : ""}` : "No anomalies"}`}
@@ -832,7 +832,7 @@ export default function App() {
                                   ))}
                                 </div>
                                 <span className="text-[9px] font-mono text-on-surface-variant/35 mt-1.5 uppercase tracking-wider px-1">
-                                  {isUser ? "You" : "Co-Pilot"}
+                                  {isUser ? "You" : "Assistant"}
                                 </span>
                               </div>
                               {isUser && (
@@ -926,8 +926,8 @@ export default function App() {
                         title="Expand findings"
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 transition-all duration-200"
                       >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M6.5 2L3.5 5L6.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                          <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
                       <div className="w-px flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
@@ -952,18 +952,18 @@ export default function App() {
                   {/* Expanded state */}
                   {rightPanelOpen && (
                     <>
-                      {/* Collapse toggle */}
+                    {selectedScanId === "new" ? (
+                    <div className="relative h-full border border-dashed border-white/10 rounded-xl bg-surface-container-lowest/30 flex flex-col items-center justify-center text-center p-6 text-on-surface-variant/40">
                       <button
                         onClick={() => setRightPanelOpen(false)}
                         title="Collapse findings panel"
-                        className="absolute top-3 left-3 z-20 w-6 h-6 rounded-md flex items-center justify-center bg-surface-container border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                        className="absolute top-3 left-3 w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                        style={{ background: "rgba(255,255,255,0.03)" }}
                       >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M3.5 2L6.5 5L3.5 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                          <path d="M6 2.5L3 5L6 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       </button>
-                    {selectedScanId === "new" ? (
-                    <div className="h-full border border-dashed border-white/10 rounded-xl bg-surface-container-lowest/30 flex flex-col items-center justify-center text-center p-6 text-on-surface-variant/40">
                       <ImageIcon className="w-10 h-10 mb-4 opacity-20" />
                       <span className="text-[13px] font-medium text-on-surface-variant/60">Awaiting Radiograph</span>
                       <p className="text-[10px] mt-2 max-w-[200px] leading-relaxed">
@@ -975,7 +975,19 @@ export default function App() {
                       {/* Image viewer card */}
                   <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col overflow-hidden" style={{ height: "300px", flexShrink: 0 }}>
                     {/* Toolbar */}
-                    <div className="h-[38px] border-b border-white/5 flex items-center px-3 gap-1 bg-surface-container-lowest/80 shrink-0">
+                    <div className="h-[38px] border-b border-white/5 flex items-center px-2 gap-1 bg-surface-container-lowest/80 shrink-0">
+                      {/* Collapse button — lives in the toolbar so it never overlaps other buttons */}
+                      <button
+                        onClick={() => setRightPanelOpen(false)}
+                        title="Collapse findings panel"
+                        className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                        style={{ background: "rgba(255,255,255,0.03)" }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                          <path d="M6 2.5L3 5L6 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <div className="w-[1px] h-3 bg-white/8 mx-1 shrink-0" />
                       <button onClick={handleZoomIn} title="Zoom In" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
                         <ZoomIn className="w-3 h-3" />
                       </button>
@@ -1047,11 +1059,14 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* Metrics row */}
-                      <div className="absolute bottom-3 left-3 right-3 flex justify-between">
-                        <span className="text-[9px] font-mono px-2 py-1 rounded bg-surface-container/80 border border-white/5 text-secondary-container">{activeScan.metrics.acc}</span>
-                        <span className="text-[9px] font-mono px-2 py-1 rounded bg-surface-container/80 border border-white/5 text-on-surface-variant">{activeScan.metrics.lat}</span>
-                      </div>
+                      {/* Metrics row — show top confidence only when findings exist */}
+                      {activeScan.findings.length > 0 && (
+                        <div className="absolute bottom-3 left-3">
+                          <span className="text-[9px] font-mono px-2 py-1 rounded bg-surface-container/80 border border-white/5 text-secondary-container">
+                            {(Math.max(...activeScan.findings.map(f => f.confidence)) * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1076,7 +1091,7 @@ export default function App() {
                               <p className="text-[10px] text-on-surface-variant/60 mt-1 leading-relaxed">Both lung lobes, cardiac silhouette, and vertebral alignment are clear.</p>
                             </div>
                           ) : (
-                            activeScan.findings.map((f, i) => {
+                            [...activeScan.findings].sort((a, b) => b.confidence - a.confidence).map((f, i) => {
                               const isSel = selectedFinding?.name === f.name;
                               return (
                                 <div
