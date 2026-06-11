@@ -467,22 +467,13 @@ export default function App() {
                 <div className="relative bg-surface rounded-lg glass-border h-[400px] lg:h-[430px] flex items-center justify-center overflow-hidden group shadow-[0_0_80px_20px_rgba(0,0,0,0.4)]">
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary-fixed/5 to-transparent pointer-events-none" />
 
-                  {/* Decorative Scan Lines */}
-                  <div className="absolute top-0 left-0 w-full h-[2px] bg-secondary-container/20 animate-[ping_4s_infinite]" />
+
 
                   <div className="w-[260px] h-[260px] lg:w-[300px] lg:h-[300px] flex items-center justify-center relative">
                     {renderLungStencil("pleural_effusion")}
                   </div>
 
-                  {/* Dynamic Indicators */}
-                  <div className="absolute bottom-5 left-5 right-5 flex justify-between">
-                    <div className="bg-surface-container-high px-3 py-1.5 rounded-md font-data-mono text-data-mono text-secondary-container glass-border text-[11px] tracking-wider uppercase">
-                      ACC: 94.7%
-                    </div>
-                    <div className="bg-surface-container-high px-3 py-1.5 rounded-md font-data-mono text-data-mono text-on-surface-variant glass-border text-[11px] tracking-wider uppercase">
-                      LAT: 12ms
-                    </div>
-                  </div>
+
                 </div>
               </div>
 
