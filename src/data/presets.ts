@@ -1,4 +1,7 @@
 import { Scan, TeamMember } from "../types";
+import muneebImage from "../assets/muneeb.jpeg";
+import talhaImage from "../assets/talha.jpg";
+import ehsaanImage from "../assets/ehsaan.png";
 
 // Base64 or standard SVG data of chest X-ray silhouettes to draw natively
 export const LUNG_SVG_STENCIL = `<svg viewBox="0 0 400 400" className="w-full h-full opacity-40 text-surface-tint" fill="currentColor">
@@ -145,24 +148,40 @@ export const PRESET_SCANS: Scan[] = [
 
 export const TEAM_MEMBERS: TeamMember[] = [
   {
-    name: "Muhammad Talha Khan",
-    role: "Team Lead · AI Architecture & Full-Stack",
+    name: "M Talha Khan",
+    role: "Software & AI Engineer",
     avatar: "MT",
-    gradTitle: "Computer Science & AI Researcher",
-    skills: ["ML Pipeline", "FastAPI", "System Design", "PyTorch"]
+    rollNo: "62723",
+    responsibilities: [
+      "Frontend development",
+      "Model improvements",
+      "Code Optimization"
+    ],
+    image: talhaImage
   },
   {
     name: "Muneeb Khan",
-    role: "Frontend Developer · UI/UX & React",
+    role: "ML Engineer & AI Architecture",
     avatar: "MK",
-    gradTitle: "Design Engineer",
-    skills: ["React", "Framer", "Design Systems", "Tailwind CSS"]
+    rollNo: "62799",
+    responsibilities: [
+      "Model integration",
+      "Training & evaluation",
+      "Data preprocessing"
+    ],
+    image: muneebImage
   },
   {
-    name: "Muhammad Ehsaan Bawany",
-    role: "ML Engineer · Training & Evaluation",
+    name: "M Ehsaan Bawany",
+    role: "UI/UX & Documentation",
     avatar: "ME",
-    gradTitle: "Deep Learning Engineer",
-    skills: ["PyTorch", "DenseNet", "Grad-CAM", "DICOM Pipeline"]
+    rollNo: "62375",
+    responsibilities: [
+      "UI/UX design",
+      "Documentation",
+      "Report writing"
+    ],
+    image: ehsaanImage
   }
 ];
+

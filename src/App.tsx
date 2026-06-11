@@ -1191,35 +1191,46 @@ export default function App() {
                 {TEAM_MEMBERS.map((member, index) => (
                   <div
                     key={index}
-                    className="bg-surface-container-lowest rounded-lg p-6 border border-white/5 hover:border-secondary-container/20 hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group"
+                    className="bg-surface-container-lowest rounded-lg p-6 border border-white/5 hover:border-secondary-container/20 hover:-translate-y-1 transition-all duration-300 group"
                   >
-                    <div>
-                      {/* Avatar initial */}
-                      <div className="w-11 h-11 rounded-full p-[2px] bg-gradient-to-br from-secondary-fixed to-on-tertiary-container mb-4 flex items-center justify-center">
-                        <div className="w-[38px] h-[38px] rounded-full bg-surface-container-high flex items-center justify-center text-primary font-bold font-mono text-[13px]">
-                          {member.avatar}
+                    {/* Top Row: Avatar/Image & Roll Number */}
+                    <div className="flex items-center justify-between mb-4">
+                      {member.image ? (
+                        <img
+                          src={member.image}
+                          alt={member.name}
+                          className="w-16 h-16 rounded-full object-cover border border-white/10"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-br from-secondary-fixed to-on-tertiary-container flex items-center justify-center">
+                          <div className="w-[60px] h-[60px] rounded-full bg-surface-container-high flex items-center justify-center text-primary font-bold font-mono text-[16px]">
+                            {member.avatar}
+                          </div>
                         </div>
-                      </div>
-
-                      <h3 className="text-primary text-[17px] font-bold leading-tight">{member.name}</h3>
-                      <span className="text-secondary-container text-[11px] font-mono tracking-wide mt-1 block">
-                        {member.role}
-                      </span>
-                      <p className="text-[12px] text-on-surface-variant mt-2.5 leading-relaxed">
-                        {member.gradTitle}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5 mt-6 pt-4 border-t border-white/5">
-                      {member.skills.map((skill, si) => (
-                        <span
-                          key={si}
-                          className="px-2.5 py-1 bg-surface-container-high text-secondary-fixed/95 text-[10px] font-mono rounded-md transition-colors duration-200 hover:bg-secondary-container/20 hover:text-white"
-                        >
-                          {skill}
+                      )}
+                      {member.rollNo && (
+                        <span className="px-2.5 py-0.5 rounded-full border border-white/10 text-on-surface-variant/70 bg-surface-container-low text-[10px] font-mono font-medium">
+                          #{member.rollNo}
                         </span>
-                      ))}
+                      )}
                     </div>
+
+                    <h3 className="text-primary text-[17px] font-bold leading-tight">{member.name}</h3>
+                    <span className="text-secondary-container text-[11.5px] font-mono tracking-wide mt-1 block mb-4">
+                      {member.role}
+                    </span>
+
+                    {/* Primary Responsibilities (3 bullet points) */}
+                    {member.responsibilities && member.responsibilities.length > 0 && (
+                      <ul className="space-y-2">
+                        {member.responsibilities.map((resp, ri) => (
+                          <li key={ri} className="text-[12px] text-on-surface-variant/80 flex items-start gap-2 leading-relaxed">
+                            <span className="text-secondary-container font-bold shrink-0 mt-0.5">·</span>
+                            <span>{resp}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 ))}
               </div>

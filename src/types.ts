@@ -34,6 +34,11 @@ export interface TeamMember {
   name: string;
   role: string;
   avatar: string;
-  gradTitle: string;
-  skills: string[];
+  gradTitle?: string;
+  skills?: string[];
+  rollNo?: string;
+  responsibilities?: string[];
+  image?: string;
 }
+
+
