@@ -929,10 +929,10 @@ export default function App() {
                           <span className="text-[9px] font-mono text-on-surface-variant/40 uppercase tracking-[0.16em] mb-3 block">Suggested prompts</span>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {[
-                              { icon: "🔍", text: "Explain findings in plain terms" },
-                              { icon: "📋", text: "What are the next clinical steps?" },
-                              { icon: "⚠️", text: activeScan.findings.length > 0 ? "How severe are these findings?" : "Confirm lungs are normal" },
-                              { icon: "💊", text: "Suggest treatment considerations" },
+                              { icon: "🔍", text: "Explain my findings in simple terms" },
+                              { icon: "📍", text: "Find hospitals near me" },
+                              { icon: "⚠️", text: activeScan.findings.length > 0 ? "How serious are these findings?" : "Are my lungs healthy?" },
+                              { icon: "🩺", text: "What symptoms should I watch for?" },
                             ].map((item, idx) => (
                               <button
                                 key={idx}
@@ -1015,7 +1015,7 @@ export default function App() {
                   {/* Quick-reply chips (when messages exist) */}
                   {(chatHistory[selectedScanId] || []).length > 0 && (
                     <div className="px-5 pb-2 flex gap-2 overflow-x-auto scrollbar-none shrink-0">
-                      {["Explain findings", "Next steps", "Severity level", "Treatment options"].map((chip, idx) => (
+                      {["What does this mean?", "Find hospitals near me", "How urgent is this?", "What happens next?"].map((chip, idx) => (
                         <button
                           key={idx}
                           disabled={isChatLoading}
