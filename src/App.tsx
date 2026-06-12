@@ -37,6 +37,7 @@ export default function App() {
   const [hasApiKey, setHasApiKey] = useState<boolean>(true);
   const [leftPanelOpen, setLeftPanelOpen] = useState<boolean>(true);
   const [rightPanelOpen, setRightPanelOpen] = useState<boolean>(true);
+  const [activeModal, setActiveModal] = useState<"privacy" | "terms" | "hipaa" | "contact" | null>(null);
 
   // Image viewer filters & manipulation
   const [zoom, setZoom] = useState<number>(1.0);
@@ -1322,10 +1323,10 @@ Content-Type: application/json
 
           {/* Links list */}
           <div className="flex flex-wrap justify-center gap-5 text-on-surface-variant text-[11px] lowercase tracking-widest font-normal">
-            <a className="hover:text-secondary-fixed transition-colors duration-200" href="#privacy">Privacy Policy</a>
-            <a className="hover:text-secondary-fixed transition-colors duration-200" href="#terms">Terms of Service</a>
-            <a className="hover:text-secondary-fixed transition-colors duration-200" href="#hipaa">HIPAA Compliance</a>
-            <a className="hover:text-secondary-fixed transition-colors duration-200" href="#contact">Contact Support</a>
+            <button className="hover:text-secondary-fixed transition-colors duration-200 cursor-pointer" onClick={() => setActiveModal("privacy")}>Privacy Policy</button>
+            <button className="hover:text-secondary-fixed transition-colors duration-200 cursor-pointer" onClick={() => setActiveModal("terms")}>Terms of Service</button>
+            <button className="hover:text-secondary-fixed transition-colors duration-200 cursor-pointer" onClick={() => setActiveModal("hipaa")}>HIPAA Compliance</button>
+            <button className="hover:text-secondary-fixed transition-colors duration-200 cursor-pointer" onClick={() => setActiveModal("contact")}>Contact Support</button>
           </div>
 
           <div className="text-on-surface-variant text-center md:text-right max-w-[340px] text-[10px] leading-relaxed tracking-wider normal-case opacity-60 shrink-0">
@@ -1333,6 +1334,185 @@ Content-Type: application/json
           </div>
         </div>
       </footer>
+
+      {/* Global Dialog Modal */}
+      <AnimatePresence>
+        {activeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop Blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveModal(null)}
+              className="absolute inset-0 bg-surface/80 backdrop-blur-md"
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="relative w-full max-w-[580px] bg-surface-container-low border border-white/8 rounded-2xl shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden z-10 flex flex-col max-h-[85vh]"
+            >
+              {/* Header */}
+              <div className="p-6 border-b border-white/5 flex items-center gap-3 bg-surface-container-lowest/50 shrink-0">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(0,227,253,0.15), rgba(0,227,253,0.04))", border: "1px solid rgba(0,227,253,0.25)" }}>
+                  {activeModal === "hipaa" && <Lock className="w-5 h-5 text-secondary-container" />}
+                  {activeModal === "privacy" && <FileText className="w-5 h-5 text-secondary-container" />}
+                  {activeModal === "terms" && <BookOpen className="w-5 h-5 text-secondary-container" />}
+                  {activeModal === "contact" && <MessageSquare className="w-5 h-5 text-secondary-container" />}
+                </div>
+                <div>
+                  <h3 className="text-primary font-bold text-[18px] tracking-tight">
+                    {activeModal === "hipaa" && "HIPAA Compliance"}
+                    {activeModal === "privacy" && "Privacy Policy"}
+                    {activeModal === "terms" && "Terms of Service"}
+                    {activeModal === "contact" && "Contact Support"}
+                  </h3>
+                  <span className="text-[10px] font-mono text-on-surface-variant/50 uppercase tracking-wider block mt-0.5">
+                    Xynapse Platform Documentation
+                  </span>
+                </div>
+                {/* Close Button */}
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="ml-auto w-8 h-8 rounded-lg flex items-center justify-center border border-white/8 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-5 text-[13.5px] leading-relaxed text-on-surface-variant/90 select-text">
+                {activeModal === "hipaa" && (
+                  <>
+                    <p>
+                      Xynapse is designed from the ground up to support compliance with the <strong>Health Insurance Portability and Accountability Act (HIPAA)</strong> safeguards. As a Clinical Decision Support System, we prioritize patients' Protected Health Information (PHI) privacy above all else.
+                    </p>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">Administrative Safeguards</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          We implement strict access management policies. Only authenticated clinical roles are authorized to request model predictions and review reports. Audit logs track all operational sessions.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">Physical & Session Safeguards</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          Xynapse runs in a secure sandbox execution mode. Scans are processed in-memory and are immediately cleared from the session memory upon closing or clearing the workspace queue. No persistent copy of patient studies is stored.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">Technical Safeguards (Encryption)</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          All multi-modal data in transit is encrypted using advanced TLS 1.3 encryption protocols. Static assets and demo configs are encrypted at rest with industry-standard AES-256 cipher standards.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeModal === "privacy" && (
+                  <>
+                    <p>
+                      Your privacy is paramount. This statement outlines what data is processed when utilizing the Xynapse platform.
+                    </p>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">Data We Process</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          The platform processes raw thoracic radiographs (PNG, JPEG, or DICOM formats), patient demographic identifiers (optional), prior clinical reports, and chat dialogue histories with the assistant.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">How We Use Your Data</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          All payloads are parsed immediately by the deep learning classifier (DenseNet-121 backend) to draw bounding-box annotations and clinical recommendations. Logs are stored strictly client-side.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">No Data Monetization</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          We do not sell, rent, or distribute data to ad brokers or third-party analytical suites. Data transmission is limited to the serverless model orchestration endpoint.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeModal === "terms" && (
+                  <>
+                    <p>
+                      By accessing the Xynapse workspace, you acknowledge and agree to the following terms and guidelines.
+                    </p>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">Clinical Decision Support Only</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          Xynapse operates as a Clinical Decision Support System (CDSS). The model outputs, probability indices, and assistant chat comments are intended solely to assist clinical decision-making. They are NOT a substitute for professional radiology assessments.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">Professional Liability</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          The user retains all professional liability for patient diagnosis and prescription of therapeutics. Xynapse developers and affiliates assume no liability for errors, false positives, or omissions in model outputs.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5">
+                        <h4 className="font-bold text-primary text-[13px] uppercase tracking-wider mb-1">Usage Constraints</h4>
+                        <p className="text-[12.5px] text-on-surface-variant/80">
+                          Reverse engineering of neural network weights, hacking the inference endpoints, or using the platform for unsolicited diagnostic reports outside of a certified medical framework is strictly prohibited.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {activeModal === "contact" && (
+                  <>
+                    <p>
+                      Do you have questions about deployment, custom medical API integrations, or HIPAA-compliant hospital networks? Reach out directly.
+                    </p>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-xl bg-surface-container/30 border border-white/5 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] font-mono text-primary uppercase tracking-wider w-20 shrink-0">Email:</span>
+                          <a href="mailto:xynapse@thebitpack.com" className="text-secondary-container hover:underline text-[13px]">xynapse@thebitpack.com</a>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-[11px] font-mono text-primary uppercase tracking-wider w-20 shrink-0">Phone:</span>
+                          <span className="text-on-surface-variant text-[13px]">+923162319913</span>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <span className="text-[11px] font-mono text-primary uppercase tracking-wider w-20 shrink-0 mt-0.5">HQ Address:</span>
+                          <span className="text-on-surface-variant/80 text-[12.5px] leading-relaxed">
+                            Remote Team, Based In Pakistan. Supporting Worldwide Operations
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] font-mono text-on-surface-variant/40 leading-relaxed text-center">
+                        Our clinical integration team typically responds to enterprise hospital deployment inquiries within 24 hours.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 border-t border-white/5 bg-surface-container-lowest flex justify-end shrink-0">
+                <button
+                  onClick={() => setActiveModal(null)}
+                  className="bg-primary text-on-primary px-5 py-2 text-[12px] rounded-lg font-semibold hover:opacity-90 transition-all cursor-pointer"
+                >
+                  Acknowledge & Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
