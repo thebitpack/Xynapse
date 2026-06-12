@@ -39,6 +39,7 @@ export interface TeamMember {
   rollNo?: string;
   responsibilities?: string[];
   image?: string;
+  linkedin?: string;
 }
 
 

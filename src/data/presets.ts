@@ -157,7 +157,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
       "Model improvements",
       "Code Optimization"
     ],
-    image: talhaImage
+    image: talhaImage,
+    linkedin: "https://www.linkedin.com/in/talhax/"
   },
   {
     name: "Muneeb Khan",
@@ -169,7 +170,8 @@ export const TEAM_MEMBERS: TeamMember[] = [
       "Training & evaluation",
       "Data preprocessing"
     ],
-    image: muneebImage
+    image: muneebImage,
+    linkedin: "https://www.linkedin.com/in/muneeb-0-khan/"
   },
   {
     name: "M Ehsaan Bawany",

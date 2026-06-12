@@ -21,7 +21,8 @@ import {
   MessageSquare,
   Send,
   Sparkles,
-  Trash2
+  Trash2,
+  Linkedin
 } from "lucide-react";
 import { PRESET_SCANS, TEAM_MEMBERS, LUNG_SVG_STENCIL, LUNG_SVG_STENCIL_CARDIOMEGALY, LUNG_SVG_STENCIL_NORMAL } from "./data/presets";
 import { ActiveSection, Scan, Finding } from "./types";
@@ -29,6 +30,7 @@ import { motion, AnimatePresence } from "motion/react";
 
 export default function App() {
   const [activeSection, setActiveSection] = useState<ActiveSection>("home");
+  const [researchTab, setResearchTab] = useState<"intro" | "data" | "arch" | "results" | "limitations">("intro");
   const [scans, setScans] = useState<Scan[]>(PRESET_SCANS);
   const [selectedScanId, setSelectedScanId] = useState<string>("new");
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
@@ -38,6 +40,9 @@ export default function App() {
   const [leftPanelOpen, setLeftPanelOpen] = useState<boolean>(true);
   const [rightPanelOpen, setRightPanelOpen] = useState<boolean>(true);
   const [activeModal, setActiveModal] = useState<"privacy" | "terms" | "hipaa" | "contact" | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [mobileTab, setMobileTab] = useState<"chat" | "viewer" | "queue">("chat");
 
   // Image viewer filters & manipulation
   const [zoom, setZoom] = useState<number>(1.0);
@@ -137,6 +142,14 @@ export default function App() {
 
   // Selected scan detail
   const activeScan = scans.find(s => s.id === selectedScanId) || scans[0];
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Fetch server status and check API key configuration
   useEffect(() => {
@@ -343,6 +356,13 @@ export default function App() {
       setScans(prev => [newScanRecord, ...prev]);
       setSelectedScanId(newScanRecord.id);
 
+      // Auto-navigation post-upload
+      if (isMobile) {
+        setMobileTab("viewer");
+      } else {
+        setRightPanelOpen(true);
+      }
+
       // Reset patient name and report fields
       setNewPatientName("");
       setNewPatientReport("");
@@ -374,21 +394,21 @@ export default function App() {
 
       {/* Top Navigation Bar */}
       <nav className="fixed top-0 left-0 w-full h-[64px] z-40 bg-surface/85 backdrop-blur-md border-b border-white/5 font-body-main text-body-main">
-        <div className="flex justify-between items-center max-w-[1440px] mx-auto px-6 md:px-8 h-full">
+        <div className="flex justify-between items-center max-w-[1440px] mx-auto px-4 md:px-8 h-full">
           {/* Logo Brand */}
           <div
-            onClick={() => setActiveSection("home")}
+            onClick={() => { setActiveSection("home"); setMobileMenuOpen(false); }}
             className="flex items-center gap-0.5 cursor-pointer select-none font-headline-md text-headline-md font-bold text-primary tracking-tight shrink-0"
           >
             <img
               alt="Xynapse Logo"
-              className="w-[70px] h-[70px] object-contain"
+              className="w-[56px] h-[56px] md:w-[70px] md:h-[70px] object-contain"
               src="/logo.png"
             />
-            <span className="tracking-wide text-[22px]">Xynapse</span>
+            <span className="tracking-wide text-[20px] md:text-[22px]">Xynapse</span>
           </div>
 
-          {/* Navigation Links — centered */}
+          {/* Navigation Links — centered (desktop only) */}
           <div className="hidden md:flex gap-6 lg:gap-8 items-center absolute left-1/2 -translate-x-1/2">
             {(["home", "analysis", "team", "about"] as ActiveSection[]).map((section) => {
               const isActive = activeSection === section;
@@ -414,20 +434,70 @@ export default function App() {
             })}
           </div>
 
-          {/* Trailing Action */}
+          {/* Trailing Action — desktop CTA + mobile hamburger */}
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setActiveSection("analysis")}
-              className="bg-primary hover:bg-white/90 text-on-primary px-5 py-2 text-[13px] rounded-md font-medium transition-all duration-200 shadow-sm hover:shadow-md"
+              className="hidden md:block bg-primary hover:bg-white/90 text-on-primary px-5 py-2 text-[13px] rounded-md font-medium transition-all duration-200 shadow-sm hover:shadow-md"
             >
               Start Analysis &rarr;
             </button>
+            {/* Mobile hamburger */}
+            <button
+              id="mobile-menu-toggle"
+              onClick={() => setMobileMenuOpen(o => !o)}
+              className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-white/10 bg-surface-container-low/60 transition-all"
+              aria-label="Toggle menu"
+            >
+              <span className={`block w-5 h-[1.5px] bg-primary rounded-full transition-all duration-300 ${mobileMenuOpen ? "rotate-45 translate-y-[6.5px]" : ""}`} />
+              <span className={`block w-5 h-[1.5px] bg-primary rounded-full transition-all duration-300 ${mobileMenuOpen ? "opacity-0" : ""}`} />
+              <span className={`block w-5 h-[1.5px] bg-primary rounded-full transition-all duration-300 ${mobileMenuOpen ? "-rotate-45 -translate-y-[6.5px]" : ""}`} />
+            </button>
           </div>
         </div>
+
+        {/* Mobile dropdown menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden absolute top-[64px] left-0 w-full bg-surface/95 backdrop-blur-xl border-b border-white/8 z-50 py-3 px-4 flex flex-col gap-1"
+            >
+              {(["home", "analysis", "team", "about"] as ActiveSection[]).map((section) => {
+                const isActive = activeSection === section;
+                const label = section === "about" ? "Research" : section;
+                return (
+                  <button
+                    key={section}
+                    onClick={() => { setActiveSection(section); setMobileMenuOpen(false); }}
+                    className={`capitalize text-left px-4 py-3 rounded-lg font-medium text-[14px] transition-all duration-200 ${
+                      isActive
+                        ? "bg-secondary-container/15 text-primary font-bold"
+                        : "text-on-surface-variant hover:text-primary hover:bg-surface-container-high"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+              <div className="mt-2 pt-2 border-t border-white/6">
+                <button
+                  onClick={() => { setActiveSection("analysis"); setMobileMenuOpen(false); }}
+                  className="w-full bg-primary text-on-primary py-3 rounded-lg font-semibold text-[14px] transition-all"
+                >
+                  Start Analysis →
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Main Container */}
-      <main className="pt-[96px] min-h-[calc(100vh-64px)] flex flex-col max-w-[1440px] mx-auto px-6 md:px-8 pb-12">
+      <main className="pt-[76px] md:pt-[96px] min-h-[calc(100vh-64px)] flex flex-col max-w-[1440px] mx-auto px-4 md:px-8 pb-6 md:pb-12">
         <AnimatePresence mode="wait">
           {/* ================= HOME SECTION ================= */}
           {activeSection === "home" && (
@@ -441,23 +511,23 @@ export default function App() {
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[500px]">
                 {/* Descriptive Copy Block */}
-                <div className="flex flex-col gap-6">
-                  <h1 className="font-display-italic text-[56px] sm:text-[72px] lg:text-[84px] leading-[0.95] text-primary tracking-tight">
+                <div className="flex flex-col gap-5 md:gap-6">
+                  <h1 className="font-display-italic text-[44px] sm:text-[64px] lg:text-[84px] leading-[0.95] text-primary tracking-tight">
                     Clarity in the<br />Shadows.
                   </h1>
-                  <p className="text-on-surface-variant max-w-[420px] text-[15px] leading-[1.7]">
-                    Advanced radiological insights powered by deep learning. Minimizing cognitive load for medical professionals through high-end software craftsmanship.
+                  <p className="text-on-surface-variant max-w-[420px] text-[14px] md:text-[15px] leading-[1.7]">
+                    Multimodal chest X-ray diagnosis and reporting assistant. Powered by deep learning to detect 5 key thoracic pathologies, minimizing cognitive load for medical professionals.
                   </p>
-                  <div className="flex flex-wrap gap-4 pt-2">
+                  <div className="flex flex-wrap gap-3 md:gap-4 pt-2">
                     <button
                       onClick={() => setActiveSection("analysis")}
-                      className="bg-primary text-on-primary px-6 py-3 rounded-md font-semibold flex items-center gap-2.5 hover:opacity-95 duration-200 transition-all shadow-lg hover:shadow-cyan-950/20 text-[14px]"
+                      className="bg-primary text-on-primary px-5 md:px-6 py-2.5 md:py-3 rounded-md font-semibold flex items-center gap-2.5 hover:opacity-95 duration-200 transition-all shadow-lg hover:shadow-cyan-950/20 text-[14px]"
                     >
                       Start Analysis <ArrowRight className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => setActiveSection("about")}
-                      className="bg-transparent text-primary px-6 py-3 rounded-md glass-border-hi font-medium hover:bg-surface-bright duration-200 transition-all text-[14px]"
+                      className="bg-transparent text-primary px-5 md:px-6 py-2.5 md:py-3 rounded-md glass-border-hi font-medium hover:bg-surface-bright duration-200 transition-all text-[14px]"
                     >
                       View Research
                     </button>
@@ -465,12 +535,12 @@ export default function App() {
                 </div>
 
                 {/* Chest X-ray Visual Poster */}
-                <div className="relative bg-surface rounded-lg glass-border h-[400px] lg:h-[430px] flex items-center justify-center overflow-hidden group shadow-[0_0_80px_20px_rgba(0,0,0,0.4)]">
+                <div className="relative bg-surface rounded-lg glass-border h-[280px] sm:h-[360px] lg:h-[430px] flex items-center justify-center overflow-hidden group shadow-[0_0_80px_20px_rgba(0,0,0,0.4)]">
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent via-secondary-fixed/5 to-transparent pointer-events-none" />
 
 
 
-                  <div className="w-[260px] h-[260px] lg:w-[300px] lg:h-[300px] flex items-center justify-center relative">
+                  <div className="w-[200px] h-[200px] sm:w-[260px] sm:h-[260px] lg:w-[300px] lg:h-[300px] flex items-center justify-center relative">
                     {renderLungStencil("pleural_effusion")}
                   </div>
 
@@ -479,22 +549,22 @@ export default function App() {
               </div>
 
               {/* Quick Metrics Strip */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-0 mt-16 rounded-lg glass-border overflow-hidden bg-surface-container-lowest/25">
-                <div className="flex flex-col gap-1.5 py-8 px-6 border-r border-white/5 last:border-r-0">
-                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-[0.12em] uppercase">Scans Analyzed</span>
-                  <span className="font-headline-lg text-headline-lg text-primary text-[32px] lg:text-[36px] leading-none">100k+</span>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-0 mt-10 md:mt-16 rounded-lg glass-border overflow-hidden bg-surface-container-lowest/25">
+                <div className="flex flex-col gap-1 md:gap-1.5 py-5 md:py-8 px-4 md:px-6 border-r border-b md:border-b-0 border-white/5">
+                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[9px] md:text-[10px] tracking-[0.12em] uppercase">Chest X-Rays Analyzed</span>
+                  <span className="font-headline-lg text-headline-lg text-primary text-[26px] md:text-[32px] lg:text-[36px] leading-none">100k+</span>
                 </div>
-                <div className="flex flex-col gap-1.5 py-8 px-6 border-r border-white/5">
-                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-[0.12em] uppercase">False Positive Rate</span>
-                  <span className="font-headline-lg text-headline-lg text-primary text-[32px] lg:text-[36px] leading-none">&lt;1.2%</span>
+                <div className="flex flex-col gap-1 md:gap-1.5 py-5 md:py-8 px-4 md:px-6 border-r border-b md:border-b-0 border-white/5 last:border-r-0 md:last:border-r-0">
+                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[9px] md:text-[10px] tracking-[0.12em] uppercase">Model Macro AUC-ROC</span>
+                  <span className="font-headline-lg text-headline-lg text-primary text-[26px] md:text-[32px] lg:text-[36px] leading-none">0.973</span>
                 </div>
-                <div className="flex flex-col gap-1.5 py-8 px-6 border-r border-white/5">
-                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-[0.12em] uppercase">DenseNet Depth</span>
-                  <span className="font-headline-lg text-headline-lg text-primary text-[32px] lg:text-[36px] leading-none">121 Layers</span>
+                <div className="flex flex-col gap-1 md:gap-1.5 py-5 md:py-8 px-4 md:px-6 border-r border-white/5">
+                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[9px] md:text-[10px] tracking-[0.12em] uppercase">DenseNet Backbone</span>
+                  <span className="font-headline-lg text-headline-lg text-primary text-[26px] md:text-[32px] lg:text-[36px] leading-none">121 Layers</span>
                 </div>
-                <div className="flex flex-col gap-1.5 py-8 px-6">
-                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[10px] tracking-[0.12em] uppercase">Clinical Precision</span>
-                  <span className="font-headline-lg text-headline-lg text-primary text-[32px] lg:text-[36px] leading-none">99.4%</span>
+                <div className="flex flex-col gap-1 md:gap-1.5 py-5 md:py-8 px-4 md:px-6">
+                  <span className="font-label-caps text-label-caps text-on-surface-variant text-[9px] md:text-[10px] tracking-[0.12em] uppercase">Target Pathologies</span>
+                  <span className="font-headline-lg text-headline-lg text-primary text-[26px] md:text-[32px] lg:text-[36px] leading-none">5 Conditions</span>
                 </div>
               </div>
             </motion.section>
@@ -511,10 +581,10 @@ export default function App() {
               className="flex-1 py-4 flex flex-col overflow-hidden"
             >
               {/* Section header */}
-              <div className="flex items-center justify-between mb-5 shrink-0">
+              <div className="flex items-center justify-between mb-4 shrink-0">
                 <div>
-                  <h2 className="text-primary font-bold text-[22px] tracking-tight leading-none">Radiology Workspace</h2>
-                  <p className="text-on-surface-variant text-[12px] mt-1">AI-powered diagnostic analysis{selectedScanId !== "new" ? ` · ${activeScan.patientName}` : " · Upload a radiograph to begin"}</p>
+                  <h2 className="text-primary font-bold text-[18px] md:text-[22px] tracking-tight leading-none">Chest X-Ray Workspace</h2>
+                  <p className="text-on-surface-variant text-[11px] md:text-[12px] mt-1">AI-powered chest pathology analysis{selectedScanId !== "new" ? ` · ${activeScan.patientName}` : " · Upload a chest X-ray to begin"}</p>
                 </div>
                 {!hasApiKey && (
                   <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-surface-container-high border border-outline-variant/30 rounded-md">
@@ -524,19 +594,51 @@ export default function App() {
                 )}
               </div>
 
-              {/* 3-column flex layout — left and right panels are collapsible */}
-              <div className="flex gap-3" style={{ height: "calc(100vh - 220px)", minHeight: "640px", overflow: "hidden" }}>
+              {/* Mobile tab bar */}
+              {isMobile && (
+                <div className="flex mb-3 rounded-lg bg-surface-container-lowest/80 border border-white/5 p-1.5 gap-1.5 shrink-0 shadow-md">
+                  {(["queue", "chat", "viewer"] as const).map(tab => {
+                    const isActive = mobileTab === tab;
+                    const Icon = tab === "queue" ? Activity : tab === "chat" ? Sparkles : ImageIcon;
+                    const label = tab === "queue" ? "Queue" : tab === "chat" ? "Assistant" : "Viewer";
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => setMobileTab(tab)}
+                        className={`flex-1 py-2 px-3 rounded-md flex items-center justify-center gap-1.5 text-[12px] font-semibold transition-all duration-300 border ${
+                          isActive
+                            ? "bg-secondary-container/15 text-secondary-container border-secondary-container/25 shadow-[0_0_12px_rgba(0,227,253,0.06)]"
+                            : "text-on-surface-variant hover:text-primary border-transparent"
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? "text-secondary-container" : "text-on-surface-variant/70"}`} />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 3-column flex layout — left and right panels are collapsible (desktop) / tabbed (mobile) */}
+              <div 
+                className={isMobile ? "flex flex-col flex-1 overflow-hidden gap-3" : "flex gap-3"} 
+                style={isMobile ? { height: "calc(100vh - 180px)", minHeight: "480px" } : { height: "calc(100vh - 220px)", minHeight: "640px", overflow: "hidden" }}
+              >
 
                 {/* ── COL 1: Radiograph Queue (collapsible) ── */}
                 <motion.div
-                  animate={{ width: leftPanelOpen ? 280 : 44 }}
+                  animate={isMobile ? {} : { width: leftPanelOpen ? 280 : 44 }}
                   transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                  className={`flex flex-col h-full overflow-hidden shrink-0 relative ${leftPanelOpen ? "bg-surface-container-lowest/70 rounded-xl border border-white/5" : "bg-transparent border-transparent"}`}
-                  style={{ minWidth: 44 }}
+                  className={`${
+                    isMobile
+                      ? mobileTab === "queue" ? "flex flex-col flex-1 overflow-hidden rounded-xl border border-white/5 bg-surface-container-lowest/70" : "hidden"
+                      : `flex flex-col h-full overflow-hidden shrink-0 relative ${leftPanelOpen ? "bg-surface-container-lowest/70 rounded-xl border border-white/5" : "bg-transparent border-transparent"}`
+                  }`}
+                  style={isMobile ? {} : { minWidth: 44 }}
                 >
 
                   {/* Collapsed icon rail — mirrors right panel exactly */}
-                  {!leftPanelOpen && (
+                  {!isMobile && !leftPanelOpen && (
                     <div className="flex flex-col items-center gap-3 py-3 h-full">
                       <button
                         onClick={() => setLeftPanelOpen(true)}
@@ -550,7 +652,7 @@ export default function App() {
                       <div className="w-px flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
                       <button
                         onClick={() => setLeftPanelOpen(true)}
-                        title="Radiograph Queue"
+                        title="Chest X-Ray Queue"
                         className="w-7 h-7 rounded-lg flex items-center justify-center bg-surface-container-lowest/70 border border-white/5 text-on-surface-variant/40 hover:text-secondary-container hover:border-secondary-container/30 transition-all duration-200"
                       >
                         <Activity className="w-3.5 h-3.5" />
@@ -567,21 +669,23 @@ export default function App() {
                   )}
 
                   {/* Expanded panel */}
-                  {leftPanelOpen && (
+                  {(isMobile || leftPanelOpen) && (
                     <div className="flex flex-col gap-4 p-4 h-full overflow-hidden">
                       {/* Collapse toggle — mirrors right panel's absolute button position */}
-                      <button
-                        onClick={() => setLeftPanelOpen(false)}
-                        title="Collapse queue"
-                        className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center bg-surface-container border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
-                      >
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                          <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
+                      {!isMobile && (
+                        <button
+                          onClick={() => setLeftPanelOpen(false)}
+                          title="Collapse queue"
+                          className="absolute top-3 right-3 z-20 w-6 h-6 rounded-md flex items-center justify-center bg-surface-container border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                        >
+                          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                            <path d="M7 2.5L4 5L7 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
+                      )}
                       <div className="flex flex-col gap-2 flex-1 min-h-0">
                         <div className="flex items-center gap-2 pr-2 border-b border-white/5 pb-3 mb-1">
-                          <span className="text-[9px] font-bold text-on-surface-variant tracking-[0.14em] uppercase">Radiograph Queue</span>
+                          <span className="text-[9px] font-bold text-on-surface-variant tracking-[0.14em] uppercase">Chest X-Ray Queue</span>
                           <span className="text-[9px] font-mono text-on-surface-variant/60 bg-surface-container px-1.5 py-0.5 rounded">{scans.length}</span>
                         </div>
                         <div className="flex flex-col gap-1.5 overflow-y-auto pr-0.5 flex-1 min-h-0">
@@ -624,45 +728,50 @@ export default function App() {
                 </motion.div>
 
                 {/* ── COL 2: HERO — AI Chatbot ── */}
-                <div className="relative rounded-xl overflow-hidden flex flex-col border border-white/5 shadow-[0_0_60px_rgba(0,227,253,0.04)] h-full flex-1 min-w-0" style={{ background: "linear-gradient(160deg, #0d0d16 0%, #13131b 60%, #0d1018 100%)" }}>
+                <div className={`relative rounded-xl overflow-hidden flex flex-col border border-white/5 shadow-[0_0_60px_rgba(0,227,253,0.04)] min-w-0 ${
+                  isMobile
+                    ? mobileTab === "chat" ? "flex-1 overflow-hidden" : "hidden"
+                    : "h-full flex-1"
+                }`} style={{ background: "linear-gradient(160deg, #0d0d16 0%, #13131b 60%, #0d1018 100%)" }}>
 
                   {/* Ambient glow top-center */}
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[340px] h-[1px] bg-gradient-to-r from-transparent via-secondary-container/40 to-transparent" />
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[200px] h-[60px] bg-secondary-container/5 blur-3xl rounded-full pointer-events-none" />
 
                   {/* Chat hero header */}
-                  <div className="relative shrink-0 px-5 py-4 border-b border-white/5 flex items-center justify-between" style={{ background: "rgba(13,13,22,0.8)" }}>
-                    <div className="flex items-center gap-3">
+                  <div className="relative shrink-0 px-4 md:px-5 py-3.5 md:py-4 border-b border-white/5 flex items-center justify-between" style={{ background: "rgba(13,13,22,0.8)" }}>
+                    <div className="flex items-center gap-2 md:gap-3">
                       {/* AI avatar */}
-                      <div className="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(0,227,253,0.15), rgba(0,227,253,0.04))", border: "1px solid rgba(0,227,253,0.25)" }}>
-                        <Sparkles className="w-4 h-4 text-secondary-container" />
+                      <div className="relative w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, rgba(0,227,253,0.15), rgba(0,227,253,0.04))", border: "1px solid rgba(0,227,253,0.25)" }}>
+                        <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4 text-secondary-container" />
                         <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-surface-container-lowest" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-primary font-bold text-[14px] tracking-tight">Xynapse Assistant</span>
+                        <div className="flex items-center gap-1.5 md:gap-2">
+                          <span className="text-primary font-bold text-[13px] md:text-[14px] tracking-tight">Xynapse Assistant</span>
                         </div>
-                        <p className="text-[10px] text-on-surface-variant/70 mt-0.5">
+                        <p className="text-[9px] md:text-[10px] text-on-surface-variant/70 mt-0.5">
                           Context: <span className="text-secondary-container/90">{selectedScanId === "new" ? "New Upload" : activeScan.patientName}</span> {selectedScanId !== "new" && `· ${activeScan.findings.length > 0 ? `${activeScan.findings.length} finding${activeScan.findings.length > 1 ? "s" : ""}` : "No anomalies"}`}
                         </p>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-3">
+ 
+                    <div className="flex items-center gap-2 md:gap-3">
                       <button
                         onClick={() => setSelectedScanId("new")}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[12px] font-semibold transition-all duration-200 ${selectedScanId === "new"
+                        className={`flex items-center gap-1.5 md:gap-2 px-2.5 md:px-4 py-1.5 md:py-2 rounded-lg text-[11px] md:text-[12px] font-semibold transition-all duration-200 ${selectedScanId === "new"
                           ? "bg-[#0b2b5c] text-white border border-[#1a3d7c]"
                           : "bg-[#0b2b5c]/40 text-white/80 border border-[#0b2b5c]/30 hover:bg-[#0b2b5c]/70 hover:text-white"
                           }`}
                       >
                         <Upload className="w-3.5 h-3.5" />
-                        Start New Diagnosis
+                        <span className="hidden sm:inline">Start New Diagnosis</span>
+                        <span className="inline sm:hidden">New</span>
                       </button>
                       {(chatHistory[selectedScanId] || []).length > 0 && (
                         <button
                           onClick={handleClearChatHistory}
-                          className="flex items-center gap-1.5 text-[10px] font-mono text-on-surface-variant/50 hover:text-red-400 transition-colors cursor-pointer"
+                          className="flex items-center gap-1 text-[9px] md:text-[10px] font-mono text-on-surface-variant/50 hover:text-red-400 transition-colors cursor-pointer"
                         >
                           <Trash2 className="w-3 h-3" />
                           Clear
@@ -670,20 +779,20 @@ export default function App() {
                       )}
                     </div>
                   </div>
-
+ 
                   {/* Messages area */}
-                  <div className={`flex-1 overflow-y-auto px-5 py-4 space-y-4 scrollbar-thin select-text min-w-0 ${selectedScanId === "new" ? "flex flex-col justify-center items-center" : "flex flex-col"}`}>
+                  <div className={`flex-1 overflow-y-auto px-4 md:px-5 py-4 space-y-4 scrollbar-thin select-text min-w-0 ${selectedScanId === "new" ? (isMobile ? "flex flex-col justify-start items-center py-6" : "flex flex-col justify-center items-center") : "flex flex-col"}`}>
                     {selectedScanId === "new" ? (
-                      <div style={{ width: "100%", maxWidth: "420px" }} className="flex flex-col gap-6">
-                        <div className="text-center mb-2">
-                          <h3 className="text-primary font-bold text-[20px] tracking-tight mb-2">Initialize Analysis</h3>
-                          <p className="text-on-surface-variant/70 text-[13px] leading-relaxed">
-                            Provide the patient's radiograph and ID to generate a comprehensive AI-driven clinical report.
+                      <div style={{ width: "100%", maxWidth: "420px" }} className="flex flex-col gap-4 md:gap-6 py-2">
+                        <div className="text-center mb-1 md:mb-2">
+                          <h3 className="text-primary font-bold text-[18px] md:text-[20px] tracking-tight mb-1 md:mb-2">Initialize Analysis</h3>
+                          <p className="text-on-surface-variant/70 text-[12px] md:text-[13px] leading-relaxed">
+                            Provide the patient's chest X-ray and optional clinical notes to generate a comprehensive AI-driven chest pathology report.
                           </p>
                         </div>
-
+ 
                         {/* Patient input */}
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5 md:gap-2">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-bold text-on-surface-variant tracking-[0.14em] uppercase text-left">Patient Demographics</label>
                             <span className="text-[9px] font-mono text-on-surface-variant/40 uppercase tracking-wider">Optional</span>
@@ -693,12 +802,12 @@ export default function App() {
                             value={newPatientName}
                             onChange={(e) => setNewPatientName(e.target.value)}
                             placeholder="Full Name or Patient ID"
-                            className="w-full bg-surface-container px-4 py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors"
+                            className="w-full bg-surface-container px-4 py-2.5 md:py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors"
                           />
                         </div>
-
+ 
                         {/* Clinical report / notes input (optional) */}
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5 md:gap-2">
                           <div className="flex items-center justify-between">
                             <label className="text-[10px] font-bold text-on-surface-variant tracking-[0.14em] uppercase text-left">Clinical Notes</label>
                             <span className="text-[9px] font-mono text-on-surface-variant/40 uppercase tracking-wider">Optional</span>
@@ -707,11 +816,11 @@ export default function App() {
                             value={newPatientReport}
                             onChange={(e) => setNewPatientReport(e.target.value)}
                             placeholder="Paste prior radiology report, symptoms, or relevant clinical context…"
-                            rows={3}
-                            className="w-full bg-surface-container px-4 py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors resize-none leading-relaxed"
+                            rows={isMobile ? 2 : 3}
+                            className="w-full bg-surface-container px-4 py-2.5 md:py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors resize-none leading-relaxed"
                           />
                         </div>
-
+ 
                         {/* Drop zone */}
                         <div
                           onDragEnter={handleDrag}
@@ -719,25 +828,25 @@ export default function App() {
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
                           onClick={triggerFileInput}
-                          className={`border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${dragActive
+                          className={`border-2 border-dashed rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${dragActive
                             ? "border-secondary-container bg-secondary-container/10 scale-[0.98]"
                             : "border-outline-variant/40 hover:border-secondary-container/50 hover:bg-surface-container-low/80"
                             }`}
                         >
                           <input type="file" ref={fileInputRef} onChange={handleFileInputChange} className="hidden" accept="image/*" />
                           {isAnalyzing ? (
-                            <div className="flex flex-col items-center py-4">
-                              <RefreshCw className="w-8 h-8 text-secondary-container animate-spin mb-4" />
-                              <span className="font-medium text-primary text-[14px]">Consulting Xynapse...</span>
-                              <span className="font-data-mono text-[10px] text-on-surface-variant/50 mt-1.5">Processing multi-modal inputs</span>
+                            <div className="flex flex-col items-center py-2 md:py-4">
+                              <RefreshCw className="w-6 h-6 md:w-8 md:h-8 text-secondary-container animate-spin mb-3 md:mb-4" />
+                              <span className="font-medium text-primary text-[13px] md:text-[14px]">Consulting Xynapse...</span>
+                              <span className="font-data-mono text-[9px] md:text-[10px] text-on-surface-variant/50 mt-1.5">Processing multi-modal inputs</span>
                             </div>
                           ) : (
                             <>
-                              <div className="w-12 h-12 rounded-full bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center mb-4">
-                                <Upload className="w-6 h-6 text-secondary-container" />
+                              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center mb-3 md:mb-4">
+                                <Upload className="w-5 h-5 md:w-6 md:h-6 text-secondary-container" />
                               </div>
-                              <span className="font-bold text-primary text-[14px] mb-1">Drag radiograph here or browse</span>
-                              <span className="font-data-mono text-[10px] text-on-surface-variant/50">PNG, JPG, DCM up to 20MB</span>
+                              <span className="font-bold text-primary text-[13px] md:text-[14px] mb-1">{isMobile ? "Tap to upload chest X-ray" : "Drag chest X-ray here or browse"}</span>
+                              <span className="font-data-mono text-[9px] md:text-[10px] text-on-surface-variant/50">PNG, JPG, DCM up to 20MB</span>
                             </>
                           )}
                         </div>
@@ -762,7 +871,7 @@ export default function App() {
 
                         <h3 className="text-primary font-bold text-[18px] tracking-tight mb-2">AI Clinical Assistant</h3>
                         <p className="text-on-surface-variant/70 text-[13px] leading-relaxed max-w-[360px] mb-8">
-                          Ask anything about <span className="text-primary font-medium">{activeScan.patientName}</span>'s radiograph. I'll explain findings, severity, and clinical guidance in plain language.
+                          Ask anything about <span className="text-primary font-medium">{activeScan.patientName}</span>'s chest X-ray. I'll explain findings, severity, and clinical guidance in plain language.
                         </p>
 
                         {/* Suggested prompt grid */}
@@ -805,7 +914,7 @@ export default function App() {
                                   <Sparkles className="w-3 h-3 text-secondary-container" />
                                 </div>
                               )}
-                              <div className={`max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
+                              <div className={`max-w-[88%] md:max-w-[78%] flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                                 <div className={`px-4 py-3 rounded-2xl text-[13px] leading-relaxed ${isUser
                                   ? "rounded-tr-sm text-on-secondary-container font-medium"
                                   : "rounded-tl-sm border border-white/5 text-on-surface"
@@ -879,7 +988,7 @@ export default function App() {
                           value={chatInput}
                           onChange={(e) => setChatInput(e.target.value)}
                           disabled={isChatLoading}
-                          placeholder={`Ask about ${activeScan.patientName.split(" ")[0]}'s scan...`}
+                          placeholder={`Ask about ${activeScan.patientName.split(" ")[0]}'s chest X-ray...`}
                           className="w-full py-3 pl-4 pr-12 text-[13px] rounded-xl border border-white/8 focus:border-secondary-container/50 focus:outline-none text-primary placeholder:text-on-surface-variant/35 transition-all disabled:opacity-50"
                           style={{ background: "rgba(255,255,255,0.04)", backdropFilter: "blur(8px)" }}
                         />
@@ -901,13 +1010,17 @@ export default function App() {
 
                 {/* ── COL 3: Image Viewer + Findings (collapsible) ── */}
                 <motion.div
-                  animate={{ width: rightPanelOpen ? 340 : 44 }}
+                  animate={isMobile ? {} : { width: rightPanelOpen ? 340 : 44 }}
                   transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                  className="flex flex-col h-full overflow-hidden shrink-0 relative gap-3"
-                  style={{ minWidth: 44 }}
+                  className={`${
+                    isMobile
+                      ? mobileTab === "viewer" ? "flex flex-col flex-1 overflow-hidden gap-3" : "hidden"
+                      : "flex flex-col h-full overflow-hidden shrink-0 relative gap-3"
+                  }`}
+                  style={isMobile ? {} : { minWidth: 44 }}
                 >
                   {/* Collapsed icon rail */}
-                  {!rightPanelOpen && (
+                  {!isMobile && !rightPanelOpen && (
                     <div className="flex flex-col items-center gap-3 py-3 h-full">
                       <button
                         onClick={() => setRightPanelOpen(true)}
@@ -936,66 +1049,81 @@ export default function App() {
                       <div className="w-px h-4 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
                     </div>
                   )}
-
+ 
                   {/* Expanded state */}
-                  {rightPanelOpen && (
+                  {(isMobile || rightPanelOpen) && (
                     <>
                       {selectedScanId === "new" ? (
                         <div className="relative h-full border border-dashed border-white/10 rounded-xl bg-surface-container-lowest/30 flex flex-col items-center justify-center text-center p-6 text-on-surface-variant/40">
-                          <button
-                            onClick={() => setRightPanelOpen(false)}
-                            title="Collapse findings panel"
-                            className="absolute top-3 left-3 w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
-                            style={{ background: "rgba(255,255,255,0.03)" }}
-                          >
-                            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                              <path d="M4 2.5L7 5L4 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          </button>
+                          {!isMobile && (
+                            <button
+                              onClick={() => setRightPanelOpen(false)}
+                              title="Collapse findings panel"
+                              className="absolute top-3 left-3 w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                              style={{ background: "rgba(255,255,255,0.03)" }}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                                <path d="M4 2.5L7 5L4 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              </svg>
+                            </button>
+                          )}
                           <ImageIcon className="w-10 h-10 mb-4 opacity-20" />
-                          <span className="text-[13px] font-medium text-on-surface-variant/60">Awaiting Radiograph</span>
+                          <span className="text-[13px] font-medium text-on-surface-variant/60">Awaiting Chest X-Ray</span>
                           <p className="text-[10px] mt-2 max-w-[200px] leading-relaxed">
-                            Upload a scan in the central panel to generate clinical findings.
+                            Upload a chest X-ray in the central panel to generate clinical findings.
                           </p>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
                           {/* Image viewer card */}
-                          <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col overflow-hidden" style={{ height: "300px", flexShrink: 0 }}>
+                          <div className="bg-surface-container-lowest/70 rounded-xl border border-white/5 flex flex-col overflow-hidden shrink-0" style={{ height: isMobile ? "220px" : "300px" }}>
                             {/* Toolbar */}
                             <div className="h-[38px] border-b border-white/5 flex items-center px-2 gap-1 bg-surface-container-lowest/80 shrink-0">
                               {/* Collapse button — lives in the toolbar so it never overlaps other buttons */}
-                              <button
-                                onClick={() => setRightPanelOpen(false)}
-                                title="Collapse findings panel"
-                                className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
-                                style={{ background: "rgba(255,255,255,0.03)" }}
-                              >
-                                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
-                                  <path d="M4 2.5L7 5L4 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                              </button>
-                              <div className="w-[1px] h-3 bg-white/8 mx-1 shrink-0" />
+                              {!isMobile && (
+                                <>
+                                  <button
+                                    onClick={() => setRightPanelOpen(false)}
+                                    title="Collapse findings panel"
+                                    className="w-6 h-6 rounded-md flex items-center justify-center shrink-0 border border-white/8 text-on-surface-variant/50 hover:text-primary hover:border-secondary-container/40 hover:bg-surface-container-high transition-all duration-200"
+                                    style={{ background: "rgba(255,255,255,0.03)" }}
+                                  >
+                                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ display: "block" }}>
+                                      <path d="M4 2.5L7 5L4 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                  </button>
+                                  <div className="w-[1px] h-3 bg-white/8 mx-1 shrink-0" />
+                                </>
+                              )}
                               <button onClick={handleZoomIn} title="Zoom In" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
                                 <ZoomIn className="w-3 h-3" />
                               </button>
                               <button onClick={handleZoomOut} title="Zoom Out" className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-all">
                                 <ZoomOut className="w-3 h-3" />
                               </button>
-                              <div className="w-[1px] h-3 bg-white/8 mx-1" />
+                              <div className="w-[1px] h-3 bg-white/8 mx-0.5 md:mx-1" />
                               <button
                                 onClick={() => setContrastSetting(c => c === "normal" ? "high" : c === "high" ? "inverted" : "normal")}
                                 className={`p-1.5 rounded-md flex items-center gap-1 text-[10px] font-mono transition-all ${contrastSetting !== "normal" ? "text-secondary-container bg-secondary-container/10" : "text-on-surface-variant hover:text-primary"}`}
                               >
                                 <Contrast className="w-3 h-3" />
-                                <span className="capitalize">{contrastSetting}</span>
+                                <span className={`capitalize ${isMobile ? "hidden" : ""}`}>{contrastSetting}</span>
+                                {isMobile && contrastSetting !== "normal" && (
+                                  <span className="text-[8px] font-bold uppercase text-secondary-container px-0.5">
+                                    {contrastSetting === "high" ? "H" : "I"}
+                                  </span>
+                                )}
                               </button>
-                              <div className="w-[1px] h-3 bg-white/8 mx-1" />
+                              <div className="w-[1px] h-3 bg-white/8 mx-0.5 md:mx-1" />
                               <button
                                 onClick={() => setShowCoordinates(!showCoordinates)}
-                                className={`p-1 text-[9px] font-mono rounded transition-all ${showCoordinates ? "text-primary" : "text-on-surface-variant/50"}`}
+                                className={`p-1 px-1.5 text-[9px] font-mono rounded border transition-all ${
+                                  showCoordinates 
+                                    ? "text-secondary-container bg-secondary-container/10 border-secondary-container/20" 
+                                    : "text-on-surface-variant/50 border-transparent"
+                                }`}
                               >
-                                OVL:{showCoordinates ? "ON" : "OFF"}
+                                OVL
                               </button>
                               <button onClick={handleResetFilters} className="ml-auto text-[9px] font-mono text-on-surface-variant/40 hover:text-primary transition-all p-1">
                                 Reset
@@ -1075,8 +1203,8 @@ export default function App() {
                                 {activeScan.findings.length === 0 ? (
                                   <div className="flex flex-col items-center justify-center text-center p-4 rounded-lg border border-white/5 bg-emerald-500/5 flex-1">
                                     <CheckCircle2 className="w-7 h-7 text-emerald-400 mb-2" />
-                                    <span className="text-emerald-400 font-bold text-[13px]">No Anomalies</span>
-                                    <p className="text-[10px] text-on-surface-variant/60 mt-1 leading-relaxed">Both lung lobes, cardiac silhouette, and vertebral alignment are clear.</p>
+                                    <span className="text-emerald-400 font-bold text-[13px]">No Target Pathologies Detected</span>
+                                    <p className="text-[10px] text-on-surface-variant/60 mt-1 leading-relaxed">None of the 5 target conditions (Cardiomegaly, Pleural Effusion, Pneumonia, Pneumothorax, and Consolidation) were detected.</p>
                                   </div>
                                 ) : (
                                   [...activeScan.findings].sort((a, b) => b.confidence - a.confidence).map((f, i) => {
@@ -1149,30 +1277,349 @@ export default function App() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="flex-1 py-10 max-w-3xl mx-auto flex flex-col justify-center gap-6 w-full"
+              className="flex-1 py-10 max-w-5xl mx-auto flex flex-col gap-6 w-full"
             >
-              <h2 className="font-display-italic text-[48px] sm:text-[54px] text-primary leading-none tracking-tight">The Research.</h2>
-              <div className="bg-surface-container-lowest border border-white/5 rounded-lg p-6 md:p-8 flex flex-col gap-5 leading-relaxed text-[15px] text-on-surface-variant">
-                <p>
-                  <strong className="text-primary">Xynapse</strong> is a state-of-the-art medical radiology analysis platform designed to bridge the gap between heavy deep learning networks and the high-pressure workflow of clinical specialists.
+              <div>
+                <h2 className="font-display-italic text-[44px] md:text-[54px] text-primary leading-none tracking-tight">The Research.</h2>
+                <h3 className="text-[18px] md:text-[22px] font-semibold text-secondary-container mt-2">Xynapse: A Multimodal Diagnosis and Reporting Assistant for Chest Radiography</h3>
+                <p className="text-[11px] font-mono text-on-surface-variant/50 uppercase tracking-wider mt-1">
+                  Undergraduate Final Year Project · M. Talha Khan, Muneeb Khan, M. Ehsaan Bawany
                 </p>
-                <p>
-                  Originally conceived as an advanced Final Year Project, it introduces structured medical diagnostics visualizer systems using serverless orchestration. The pipeline utilizes tailored classification pipelines to extract pleural fluids indices, heart metrics, spinal scoliosis angles, and lung consolidate densities securely.
-                </p>
-                <p>
-                  By presenting clear bounding-box coordinate systems and clinical-grade recommendations drafted automatically using generative intelligence templates, it dramatically reduces a specialist's reading latency, allowing them to allocate high-tier clinical attention where it's needed most.
-                </p>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 pt-5 border-t border-white/5">
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-on-surface-variant/60 font-mono tracking-[0.12em] uppercase">Target Focus</span>
-                    <span className="text-primary text-sm font-semibold">Thoracic Pathology Classifier</span>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[10px] text-on-surface-variant/60 font-mono tracking-[0.12em] uppercase">Underlying Base</span>
-                    <span className="text-primary text-sm font-semibold">DenseNet-121 / PyTorch Pipeline</span>
-                  </div>
-                </div>
+              {/* Research Tabs */}
+              <div className="flex border-b border-white/5 pb-2 overflow-x-auto gap-2 scrollbar-none shrink-0 mb-2">
+                {[
+                  { id: "intro", label: "Abstract & Intro" },
+                  { id: "data", label: "Datasets & Sampling" },
+                  { id: "arch", label: "Model Architecture" },
+                  { id: "results", label: "Experimental Results" },
+                  { id: "limitations", label: "Limitations & Future" }
+                ].map((tab) => {
+                  const isActive = researchTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setResearchTab(tab.id as any)}
+                      className={`px-4 py-2.5 rounded-lg text-xs font-bold font-mono tracking-wider uppercase border transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                        isActive
+                          ? "bg-secondary-container/10 border-secondary-container/30 text-secondary-container shadow-[0_0_12px_rgba(0,227,253,0.05)]"
+                          : "border-transparent text-on-surface-variant hover:text-primary hover:bg-white/4"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="bg-surface-container-lowest border border-white/5 rounded-2xl p-6 md:p-8 flex flex-col gap-6 text-[14px] leading-relaxed text-on-surface-variant min-h-[450px]">
+                <AnimatePresence mode="wait">
+                  {researchTab === "intro" && (
+                    <motion.div
+                      key="intro"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col gap-5"
+                    >
+                      <h4 className="text-[16px] font-bold text-primary flex items-center gap-2">
+                        <span className="text-secondary-container font-mono">1.</span> Introduction & Clinical Motivation
+                      </h4>
+                      <p>
+                        Radiology departments worldwide face mounting pressure from increasing patient volumes and a persistent shortage of expert radiologists. Chest X-ray interpretation, one of the most frequently performed diagnostic procedures, demands significant time, expertise, and the ability to reason simultaneously over visual findings and accompanying clinical context.
+                      </p>
+                      <div className="p-4 bg-surface-container-low/40 border border-white/5 rounded-xl text-primary/90 font-medium">
+                        "The gap between automated and human diagnostic approaches is therefore not merely one of classification accuracy but of information integration."
+                      </div>
+                      <p>
+                        A radiologist interpreting a chest X-ray will consult the patient's clinical history, indication for the study, and prior imaging reports alongside the image itself. Most existing automated chest X-ray systems operate exclusively on image data, ignoring the textual clinical information that clinicians routinely use to guide interpretation. Current AI systems do not replicate this multimodal reasoning, which limits their utility as decision support tools in real clinical workflows.
+                      </p>
+                      <p>
+                        This paper presents <strong className="text-primary">Xynapse</strong>, a multimodal diagnosis and reporting assistant for chest radiography. Xynapse accepts a chest X-ray image and optionally accompanying clinical notes, processes each through dedicated encoder branches, and combines the resulting feature representations through a learned gated fusion module before performing multi-label classification across five target pathologies: 
+                        <span className="text-secondary-container font-semibold"> Cardiomegaly, Pleural Effusion, Pneumonia, Pneumothorax, and Consolidation</span>.
+                      </p>
+                      <h5 className="text-xs font-bold text-primary uppercase tracking-wider mt-2">Principal Contributions:</h5>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-1">
+                        {[
+                          "A gated fusion architecture that combines DenseNet-121 image features and Bio_ClinicalBERT text embeddings through a learned sigmoid gated weighting mechanism.",
+                          "An offline Bio_ClinicalBERT embedding precomputation strategy that eliminates repeated BERT forward passes during training, reducing training time significantly.",
+                          "A principled handling of severe dataset imbalance between IU X-Ray and CheXpert through a WeightedRandomSampler with a 55:1 weight ratio.",
+                          "An auxiliary image-only classification head with a 0.3 weighted loss that prevents image encoder collapse during training.",
+                          "A transparent ablation study that documents the pseudo-label leakage effect in the IU X-Ray subset, identifying the image-only configuration as the real-world proxy."
+                        ].map((item, idx) => (
+                          <li key={idx} className="flex gap-2.5 text-[12.5px] text-on-surface-variant leading-relaxed">
+                            <span className="w-5 h-5 rounded-full bg-secondary-container/10 border border-secondary-container/20 text-secondary-container font-mono text-[10px] flex items-center justify-center shrink-0 mt-0.5">{idx + 1}</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </motion.div>
+                  )}
+
+                  {researchTab === "data" && (
+                    <motion.div
+                      key="data"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col gap-5"
+                    >
+                      <h4 className="text-[16px] font-bold text-primary flex items-center gap-2">
+                        <span className="text-secondary-container font-mono">2.</span> Datasets & Clinical Text Alignment
+                      </h4>
+                      <p>
+                        Xynapse is trained and evaluated on a combined dataset drawn from two primary sources, aligning raw pixel data with clinical language expressions:
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
+                        <div className="border border-white/5 bg-surface-container-low/35 rounded-xl p-4 flex flex-col gap-2">
+                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Indiana University (IU) X-Ray</span>
+                          <span className="text-[20px] font-bold text-secondary-container leading-none">~3,955 studies</span>
+                          <p className="text-[12px] leading-relaxed text-on-surface-variant/80">
+                            Paired studies with certified radiology reports (FINDINGS, IMPRESSION, INDICATION, and COMPARISON). Pseudo-labels are generated automatically using condition-specific keywords and a 40-character lookback window for negation checking ("no", "without", etc.).
+                          </p>
+                        </div>
+                        <div className="border border-white/5 bg-surface-container-low/35 rounded-xl p-4 flex flex-col gap-2">
+                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Stanford CheXpert Dataset</span>
+                          <span className="text-[20px] font-bold text-secondary-container leading-none">224,316 images</span>
+                          <p className="text-[12px] leading-relaxed text-on-surface-variant/80">
+                            Large-scale dataset with NLP-extracted labels. Uncertain labels are treated as negative (U-Zeros policy). To represent clinical text in CheXpert's training split, a randomized template bank is used to assign surrogate clinical phrase templates per condition.
+                          </p>
+                        </div>
+                      </div>
+                      <h5 className="text-xs font-bold text-primary uppercase tracking-wider">Weighted random sampling for 55:1 imbalance:</h5>
+                      <p>
+                        CheXpert vastly outnumbers the clinical report-rich IU X-Ray dataset (55:1). Without correction, training batches would almost exclusively contain CheXpert samples, preventing the text branch from learning to process real clinical report language. A <strong>WeightedRandomSampler</strong> assigns a sampling weight of 55 to IU X-Ray samples and 1 to CheXpert, ensuring a balanced mix of both data sources in every batch.
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {researchTab === "arch" && (
+                    <motion.div
+                      key="arch"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col gap-5"
+                    >
+                      <h4 className="text-[16px] font-bold text-primary flex items-center gap-2">
+                        <span className="text-secondary-container font-mono">3.</span> Model Architecture & Fusion Strategy
+                      </h4>
+                      <p>
+                        Xynapse's neural network utilizes separate encoding branches for visual and textual inputs, projecting both into a shared space prior to dynamic fusion.
+                      </p>
+
+                      <div className="flex flex-col gap-4 border-l-2 border-secondary-container/30 pl-4 mt-2">
+                        <div>
+                          <span className="text-xs font-mono font-bold text-secondary-container uppercase tracking-wider">Image Encoder (DenseNet-121)</span>
+                          <p className="text-[12.5px] mt-0.5">
+                            Pre-trained via <em>TorchXRayVision</em> on multiple datasets. Images are resized to 224x224 and visual features are projected to a 256-dimensional space (Linear(1024 &rarr; 256) + LayerNorm + ReLU). A progressive unfreezing schedule freezes earlier blocks and updates only denseblock4 and norm5 after epoch 6.
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-xs font-mono font-bold text-secondary-container uppercase tracking-wider">Text Encoder (Bio_ClinicalBERT)</span>
+                          <p className="text-[12.5px] mt-0.5">
+                            Extracts 768-dimensional CLS token embeddings. To speed up training, these are precomputed offline and retrieved via dictionary cache. Projected into a shared 256-dimensional space. A text dropout rate of 0.35 zero-masks text representations during training to prevent textual dominance.
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-xs font-mono font-bold text-secondary-container uppercase tracking-wider">Sigmoid Gated Fusion Module</span>
+                          <p className="text-[12.5px] mt-0.5">
+                            Avoids naive concatenation or late blending. A gate layer takes the concatenated [image, text] features (512-d) and outputs a 256-d vector <span className="font-mono text-secondary-container">&alpha; &isin; (0,1)</span>. The gated blend is computed as:
+                          </p>
+                          <div className="bg-surface-container px-4 py-2 font-mono text-[13px] border border-white/5 rounded-lg my-1.5 w-fit">
+                            gated = &alpha; &times; image_features + (1 - &alpha;) &times; text_features
+                          </div>
+                          <p className="text-[12.5px] mt-1">
+                            The final fusion representation is a 768-dimensional vector formed by concatenating the gated blend, the original image feature, and the original text feature.
+                          </p>
+                        </div>
+                        <div>
+                          <span className="text-xs font-mono font-bold text-secondary-container uppercase tracking-wider">Auxiliary Image Head & Loss</span>
+                          <p className="text-[12.5px] mt-0.5">
+                            An auxiliary classification head directly reads visual features to prevent visual branch collapse during backpropagation. Total training loss is computed as:
+                          </p>
+                          <div className="bg-surface-container px-4 py-2 font-mono text-[13px] border border-white/5 rounded-lg my-1.5 w-fit">
+                            loss = main_loss + 0.3 &times; auxiliary_loss
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {researchTab === "results" && (
+                    <motion.div
+                      key="results"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col gap-5"
+                    >
+                      <h4 className="text-[16px] font-bold text-primary flex items-center gap-2">
+                        <span className="text-secondary-container font-mono">4.</span> Experimental Evaluation & Calibration
+                      </h4>
+                      <p>
+                        Under its full multimodal setup, Xynapse achieves a macro-averaged AUC-ROC of <strong>0.9731</strong> on the test set.
+                      </p>
+
+                      <div className="overflow-x-auto border border-white/5 rounded-xl my-2">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-surface-container-high text-primary border-b border-white/5 font-semibold">
+                              <th className="p-3">Condition</th>
+                              <th className="p-3">Optimal Threshold</th>
+                              <th className="p-3">AUC-ROC</th>
+                              <th className="p-3">F1 Score</th>
+                              <th className="p-3">Precision</th>
+                              <th className="p-3">Recall</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Cardiomegaly</td>
+                              <td className="p-3 font-mono">0.46</td>
+                              <td className="p-3 font-mono text-secondary-container">0.9912</td>
+                              <td className="p-3 font-mono">0.8701</td>
+                              <td className="p-3 font-mono">0.8816</td>
+                              <td className="p-3 font-mono">0.8590</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Pleural Effusion</td>
+                              <td className="p-3 font-mono">0.83</td>
+                              <td className="p-3 font-mono text-secondary-container">0.9689</td>
+                              <td className="p-3 font-mono">0.7588</td>
+                              <td className="p-3 font-mono">0.9388</td>
+                              <td className="p-3 font-mono">0.7993</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Pneumonia</td>
+                              <td className="p-3 font-mono">0.84</td>
+                              <td className="p-3 font-mono text-secondary-container">0.9437</td>
+                              <td className="p-3 font-mono">0.7021</td>
+                              <td className="p-3 font-mono">0.8049</td>
+                              <td className="p-3 font-mono">0.7736</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Pneumothorax</td>
+                              <td className="p-3 font-mono">0.75</td>
+                              <td className="p-3 font-mono text-secondary-container">0.9876</td>
+                              <td className="p-3 font-mono">0.8462</td>
+                              <td className="p-3 font-mono">0.8067</td>
+                              <td className="p-3 font-mono">0.9338</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Consolidation</td>
+                              <td className="p-3 font-mono">0.74</td>
+                              <td className="p-3 font-mono text-secondary-container">0.9740</td>
+                              <td className="p-3 font-mono">0.7731</td>
+                              <td className="p-3 font-mono">0.9583</td>
+                              <td className="p-3 font-mono">0.7042</td>
+                            </tr>
+                            <tr className="bg-surface-container/35">
+                              <td className="p-3 font-bold text-primary">Macro Average</td>
+                              <td className="p-3 font-mono">—</td>
+                              <td className="p-3 font-mono text-secondary-container font-bold">0.9731</td>
+                              <td className="p-3 font-mono font-bold">0.7901</td>
+                              <td className="p-3 font-mono font-bold">0.8781</td>
+                              <td className="p-3 font-mono font-bold">0.8140</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <h5 className="text-xs font-bold text-primary uppercase tracking-wider mt-2">Ablation Study (Table 2):</h5>
+                      <div className="overflow-x-auto border border-white/5 rounded-xl mb-2">
+                        <table className="w-full text-left text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-surface-container-high text-primary border-b border-white/5 font-semibold">
+                              <th className="p-3">Evaluation Configuration</th>
+                              <th className="p-3">Macro AUC-ROC</th>
+                              <th className="p-3">Interpretation</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5">
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Full Multimodal (Image + Text)</td>
+                              <td className="p-3 font-mono text-secondary-container font-bold">0.9731</td>
+                              <td className="p-3 text-on-surface-variant/80">Primary configuration with both encoders active.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Text Only</td>
+                              <td className="p-3 font-mono text-secondary-container">0.8760</td>
+                              <td className="p-3 text-on-surface-variant/80">Inflated by pseudo-label leakage on the IU X-Ray subset.</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3 font-semibold text-primary">Image Only</td>
+                              <td className="p-3 font-mono text-secondary-container">0.7140</td>
+                              <td className="p-3 text-on-surface-variant/80">Proxy for real-world deployment (no clinical text at inference).</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <h5 className="text-xs font-bold text-primary uppercase tracking-wider mt-2">Threshold Calibration Analysis (F1 gains):</h5>
+                      <p className="text-[12.5px]">
+                        Sweeping thresholds from 0.05 to 0.95 on the validation set corrects positive classification bias, producing F1 score improvements ranging from <strong>13.83%</strong> for Cardiomegaly to <strong>38.42%</strong> for Pneumonia compared to default 0.5 thresholds.
+                      </p>
+
+                      <h5 className="text-xs font-bold text-primary uppercase tracking-wider">Gated Fusion Alpha Weight Analysis:</h5>
+                      <p className="text-[12.5px]">
+                        The dynamic gates converged to mean alpha values of <strong>0.444 - 0.445</strong> across all pathology evaluations. This indicates a stable, text-leaning multimodal balance, proving the auxiliary classification head successfully prevented image encoder collapse.
+                      </p>
+                    </motion.div>
+                  )}
+
+                  {researchTab === "limitations" && (
+                    <motion.div
+                      key="limitations"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex flex-col gap-5"
+                    >
+                      <h4 className="text-[16px] font-bold text-primary flex items-center gap-2">
+                        <span className="text-secondary-container font-mono">5.</span> Limitations, Future Directions & References
+                      </h4>
+                      <div className="flex flex-col gap-4">
+                        <div>
+                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Limitations & Caveats</span>
+                          <ul className="list-disc list-inside space-y-1 mt-1.5 text-[13px]">
+                            <li><strong>Pseudo-Label Leakage:</strong> The text-only baseline is structurally leaked because ground truth was extracted using keyword matching from the same reports BERT evaluated at inference.</li>
+                            <li><strong>Dataset Biases:</strong> CheXpert uncertainty labels (U-Zeros policy) treat uncertainties as negative, depressing clinical recall for complex consolidation findings.</li>
+                            <li><strong>External Generalization:</strong> Evaluation split remains adjacent to training scanner configurations; external clinical cohorts have not been tested.</li>
+                            <li><strong>Surrogate Phrase Approximation:</strong> Template phrasings used for CheXpert do not capture the syntax variance of genuine clinical note-taking.</li>
+                          </ul>
+                        </div>
+
+                        <div>
+                          <span className="text-xs font-bold text-primary uppercase tracking-wider">Future Directions</span>
+                          <ul className="list-disc list-inside space-y-1 mt-1.5 text-[13px]">
+                            <li>External multi-institution validation with expert adjudicated labels.</li>
+                            <li>Eliminating data leakage by testing text encoders on separate clinical corpora.</li>
+                            <li>Integrating attention-based spatial localization and explainability maps (e.g. Grad-CAM) directly on image output embeddings.</li>
+                            <li>Expanding classification targets beyond the primary 5 pathologies.</li>
+                          </ul>
+                        </div>
+
+                        <div className="pt-4 border-t border-white/5">
+                          <span className="text-xs font-bold text-primary uppercase tracking-wider block mb-2">Key References</span>
+                          <ul className="space-y-2 font-mono text-[11px] leading-relaxed text-on-surface-variant/70">
+                            <li>Alsentzer, E., et al. (2019). Publicly available clinical BERT embeddings. <em>arXiv preprint arXiv:1904.03323</em>.</li>
+                            <li>Boecking, B., et al. (2022). Making the most of text semantics to improve biomedical vision–language processing. <em>ECCV</em>.</li>
+                            <li>Irvin, J., et al. (2019). CheXpert: A large chest radiograph dataset with uncertainty labels. <em>AAAI</em>.</li>
+                            <li>Rajpurkar, P., et al. (2017). CheXNet: Radiologist-level pneumonia detection on chest X-rays. <em>arXiv:1711.05225</em>.</li>
+                            <li>Smit, A., et al. (2020). CheXBERT: Combining automatic labelers and expert annotations for report labeling. <em>EMNLP</em>.</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.section>
           )}
@@ -1194,7 +1641,7 @@ export default function App() {
                     key={index}
                     className="bg-surface-container-lowest rounded-lg p-6 border border-white/5 hover:border-secondary-container/20 hover:-translate-y-1 transition-all duration-300 group"
                   >
-                    {/* Top Row: Avatar/Image & Roll Number */}
+                    {/* Top Row: Avatar/Image & Roll Number/LinkedIn */}
                     <div className="flex items-center justify-between mb-4">
                       {member.image ? (
                         <img
@@ -1209,11 +1656,24 @@ export default function App() {
                           </div>
                         </div>
                       )}
-                      {member.rollNo && (
-                        <span className="px-2.5 py-0.5 rounded-full border border-white/10 text-on-surface-variant/70 bg-surface-container-low text-[10px] font-mono font-medium">
-                          #{member.rollNo}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {member.linkedin && (
+                          <a
+                            href={member.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg border border-white/5 bg-surface-container-low text-on-surface-variant/50 hover:text-[#00e3fd] hover:border-secondary-container/30 hover:scale-105 transition-all duration-200"
+                            title={`LinkedIn profile of ${member.name}`}
+                          >
+                            <Linkedin className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        {member.rollNo && (
+                          <span className="px-2.5 py-0.5 rounded-full border border-white/10 text-on-surface-variant/70 bg-surface-container-low text-[10px] font-mono font-medium">
+                            #{member.rollNo}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     <h3 className="text-primary text-[17px] font-bold leading-tight">{member.name}</h3>
