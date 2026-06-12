@@ -36,6 +36,7 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState<boolean>(false);
+  const [stagedFile, setStagedFile] = useState<{ file: File; base64: string } | null>(null);
   const [hasApiKey, setHasApiKey] = useState<boolean>(true);
   const [leftPanelOpen, setLeftPanelOpen] = useState<boolean>(true);
   const [rightPanelOpen, setRightPanelOpen] = useState<boolean>(true);
@@ -54,10 +55,12 @@ export default function App() {
   const [chatInput, setChatInput] = useState<string>("");
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
   const [chatHistory, setChatHistory] = useState<Record<string, { role: "user" | "model"; text: string }[]>>({});
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
@@ -204,12 +207,12 @@ export default function App() {
     }
   };
 
-  // Read file as base64 for the image viewer, then call analysis with raw File for FormData
+  // Read file as base64 and stage it for preview — does NOT trigger analysis yet
   const handleFileSelected = (file: File) => {
     setUploadError(null);
     console.log("[Xynapse] handleFileSelected →", { name: file.name, type: file.type, size: file.size });
 
-    // Size check (max 20MB for immediate reliable analysis in standard preview)
+    // Size check (max 20MB)
     if (file.size > 20 * 1024 * 1024) {
       setUploadError("File exceeds 20MB limit. Please upload a compressed PNG or JPG.");
       return;
@@ -219,9 +222,8 @@ export default function App() {
     reader.readAsDataURL(file);
     reader.onloadend = () => {
       const base64Data = reader.result as string;
-      console.log("[Xynapse] FileReader done — base64 length:", base64Data.length);
-      // Pass both the base64 string (for the image viewer) and the raw File (for FormData)
-      processAnalysisRequest(base64Data, file, file.name, file.type, file.size, newPatientReport);
+      console.log("[Xynapse] FileReader done — staging file, base64 length:", base64Data.length);
+      setStagedFile({ file, base64: base64Data });
     };
     reader.onerror = () => {
       console.error("[Xynapse] FileReader error");
@@ -236,7 +238,17 @@ export default function App() {
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       handleFileSelected(e.target.files[0]);
+      // Reset input so re-selecting the same file fires onChange again
+      e.target.value = "";
     }
+  };
+
+  // Called when user confirms the upload with the button
+  const handleConfirmUpload = () => {
+    if (!stagedFile) return;
+    const { file, base64 } = stagedFile;
+    setStagedFile(null);
+    processAnalysisRequest(base64, file, file.name, file.type, file.size, newPatientReport);
   };
 
   // Send image to Flask /api/predict via FormData and map response into Scan structure
@@ -781,9 +793,9 @@ export default function App() {
                   </div>
  
                   {/* Messages area */}
-                  <div className={`flex-1 overflow-y-auto px-4 md:px-5 py-4 space-y-4 scrollbar-thin select-text min-w-0 ${selectedScanId === "new" ? (isMobile ? "flex flex-col justify-start items-center py-6" : "flex flex-col justify-center items-center") : "flex flex-col"}`}>
+                  <div ref={chatMessagesRef} className={`flex-1 overflow-y-auto px-4 md:px-5 py-4 space-y-4 scrollbar-thin select-text min-w-0 ${selectedScanId === "new" ? "flex flex-col justify-start items-center" : "flex flex-col"}`}>
                     {selectedScanId === "new" ? (
-                      <div style={{ width: "100%", maxWidth: "420px" }} className="flex flex-col gap-4 md:gap-6 py-2">
+                      <div style={{ width: "100%", maxWidth: "420px" }} className="flex flex-col gap-4 md:gap-6 py-2 w-full">
                         <div className="text-center mb-1 md:mb-2">
                           <h3 className="text-primary font-bold text-[18px] md:text-[20px] tracking-tight mb-1 md:mb-2">Initialize Analysis</h3>
                           <p className="text-on-surface-variant/70 text-[12px] md:text-[13px] leading-relaxed">
@@ -815,41 +827,79 @@ export default function App() {
                           <textarea
                             value={newPatientReport}
                             onChange={(e) => setNewPatientReport(e.target.value)}
-                            placeholder="Paste prior radiology report, symptoms, or relevant clinical context…"
+                            placeholder="Optional: paste a radiology report in plain text, symptoms, or relevant clinical context…"
                             rows={isMobile ? 2 : 3}
                             className="w-full bg-surface-container px-4 py-2.5 md:py-3 text-[13px] border border-white/5 rounded-xl text-primary focus:outline-none focus:border-secondary-container/50 placeholder:text-on-surface-variant/35 transition-colors resize-none leading-relaxed"
                           />
                         </div>
  
-                        {/* Drop zone */}
-                        <div
-                          onDragEnter={handleDrag}
-                          onDragOver={handleDrag}
-                          onDragLeave={handleDrag}
-                          onDrop={handleDrop}
-                          onClick={triggerFileInput}
-                          className={`border-2 border-dashed rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${dragActive
-                            ? "border-secondary-container bg-secondary-container/10 scale-[0.98]"
-                            : "border-outline-variant/40 hover:border-secondary-container/50 hover:bg-surface-container-low/80"
-                            }`}
-                        >
-                          <input type="file" ref={fileInputRef} onChange={handleFileInputChange} className="hidden" accept="image/*" />
-                          {isAnalyzing ? (
-                            <div className="flex flex-col items-center py-2 md:py-4">
-                              <RefreshCw className="w-6 h-6 md:w-8 md:h-8 text-secondary-container animate-spin mb-3 md:mb-4" />
-                              <span className="font-medium text-primary text-[13px] md:text-[14px]">Consulting Xynapse...</span>
-                              <span className="font-data-mono text-[9px] md:text-[10px] text-on-surface-variant/50 mt-1.5">Processing multi-modal inputs</span>
+                        {/* Drop zone / staged preview */}
+                        <input type="file" ref={fileInputRef} onChange={handleFileInputChange} className="hidden" accept="image/*" />
+
+                        {stagedFile ? (
+                          /* ── Staged preview: show thumbnail + confirm button ── */
+                          <div className="flex flex-col items-center gap-4 rounded-2xl border-2 border-secondary-container/50 bg-secondary-container/5 p-5 md:p-6 transition-all duration-300">
+                            {/* Thumbnail */}
+                            <div className="relative rounded-xl overflow-hidden border border-white/10 shadow-lg" style={{ width: "100%", maxHeight: "180px", background: "#000" }}>
+                              <img
+                                src={stagedFile.base64}
+                                alt="Staged chest X-ray preview"
+                                style={{ width: "100%", maxHeight: "180px", objectFit: "contain", display: "block" }}
+                              />
                             </div>
-                          ) : (
-                            <>
-                              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center mb-3 md:mb-4">
-                                <Upload className="w-5 h-5 md:w-6 md:h-6 text-secondary-container" />
+                            {/* File info */}
+                            <div className="text-center">
+                              <p className="text-primary font-semibold text-[13px] truncate max-w-[260px]">{stagedFile.file.name}</p>
+                              <p className="text-on-surface-variant/55 font-mono text-[10px] mt-0.5">{(stagedFile.file.size / (1024 * 1024)).toFixed(2)} MB · Ready to analyze</p>
+                            </div>
+                            {/* Action row */}
+                            <div className="flex gap-2.5 w-full">
+                              <button
+                                onClick={() => { setStagedFile(null); setUploadError(null); }}
+                                className="flex-1 py-2.5 rounded-xl border border-white/10 text-on-surface-variant hover:text-red-400 hover:border-red-500/30 text-[12px] font-semibold transition-all duration-200"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={handleConfirmUpload}
+                                className="flex-1 py-2.5 rounded-xl flex items-center justify-center gap-2 text-[12px] font-bold transition-all duration-200 shadow-md hover:shadow-secondary-container/20"
+                                style={{ background: "linear-gradient(135deg, #00c8e0, #00e3fd)", color: "#001f24" }}
+                              >
+                                <Upload className="w-3.5 h-3.5" />
+                                Run Analysis
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* ── Default drop zone ── */
+                          <div
+                            onDragEnter={handleDrag}
+                            onDragOver={handleDrag}
+                            onDragLeave={handleDrag}
+                            onDrop={handleDrop}
+                            onClick={triggerFileInput}
+                            className={`border-2 border-dashed rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 ${dragActive
+                              ? "border-secondary-container bg-secondary-container/10 scale-[0.98]"
+                              : "border-outline-variant/40 hover:border-secondary-container/50 hover:bg-surface-container-low/80"
+                            }`}
+                          >
+                            {isAnalyzing ? (
+                              <div className="flex flex-col items-center py-2 md:py-4">
+                                <RefreshCw className="w-6 h-6 md:w-8 md:h-8 text-secondary-container animate-spin mb-3 md:mb-4" />
+                                <span className="font-medium text-primary text-[13px] md:text-[14px]">Consulting Xynapse...</span>
+                                <span className="font-data-mono text-[9px] md:text-[10px] text-on-surface-variant/50 mt-1.5">Processing multi-modal inputs</span>
                               </div>
-                              <span className="font-bold text-primary text-[13px] md:text-[14px] mb-1">{isMobile ? "Tap to upload chest X-ray" : "Drag chest X-ray here or browse"}</span>
-                              <span className="font-data-mono text-[9px] md:text-[10px] text-on-surface-variant/50">PNG, JPG, DCM up to 20MB</span>
-                            </>
-                          )}
-                        </div>
+                            ) : (
+                              <>
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary-container/10 border border-secondary-container/20 flex items-center justify-center mb-3 md:mb-4">
+                                  <Upload className="w-5 h-5 md:w-6 md:h-6 text-secondary-container" />
+                                </div>
+                                <span className="font-bold text-primary text-[13px] md:text-[14px] mb-1">{isMobile ? "Tap to upload chest X-ray" : "Drag chest X-ray here or browse"}</span>
+                                <span className="font-data-mono text-[9px] md:text-[10px] text-on-surface-variant/50">PNG, JPG, DCM up to 20MB</span>
+                              </>
+                            )}
+                          </div>
+                        )}
 
                         {uploadError && (
                           <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-lg text-[12px] flex items-start gap-2 text-left">
@@ -957,7 +1007,7 @@ export default function App() {
                             </div>
                           </motion.div>
                         )}
-                        <div ref={chatEndRef} />
+
                       </>
                     )}
                   </div>
